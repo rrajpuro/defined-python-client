@@ -1,7 +1,7 @@
 """Main API Client for Defined Networking"""
 
 import requests
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 
 from .exceptions import (
     DefinedClientError,
