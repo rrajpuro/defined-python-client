@@ -1,2 +1,19 @@
-def hello() -> str:
-    return "Hello from defined-client!"
+"""Defined Networking API Client"""
+
+from importlib.metadata import version, PackageNotFoundError
+
+from .client import DefinedClient
+from .exceptions import DefinedClientError, ValidationError, NotFoundError, AuthenticationError
+
+try:
+    __version__ = version("defined-client")
+except PackageNotFoundError:
+    __version__ = "0.0.0"
+
+__all__ = [
+    "DefinedClient",
+    "DefinedClientError",
+    "ValidationError",
+    "NotFoundError",
+    "AuthenticationError",
+]

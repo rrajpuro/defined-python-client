@@ -1,13 +1,15 @@
 [project]
 name = "defined-client"
 version = "0.1.0"
-description = "Add your description here"
+description = "Python client for the Defined Networking API"
 readme = "README.md"
 authors = [
     { name = "rrajpuro", email = "rarajpuro@gmail.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "requests>=2.32.5",
+]
 
 [build-system]
 requires = ["uv_build>=0.9.27,<0.10.0"]
