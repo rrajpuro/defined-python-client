@@ -109,7 +109,20 @@ class DefinedClient:
 
 
     def _handle_response(self, response: requests.Response) -> Dict[str, Any]:
-        """Handle the API response and raise errors if needed"""
+        """Handle the API response and raise errors if needed.
+
+        Parses JSON responses and maps HTTP status codes to specific
+        exception types defined in :mod:`defined_client.exceptions`.
+
+        Args:
+            response: The HTTP response object from ``requests``.
+
+        Returns:
+            Parsed JSON payload as a dictionary for successful responses.
+
+        Raises:
+            DefinedClientError or a subclass when the API indicates an error.
+        """
 
         # Treat successful responses with no content as an empty dict
         if response.ok:
@@ -180,7 +193,16 @@ class DefinedClient:
         params: Optional[Dict[str, Any]] = None,
         timeout: int = 30,
     ) -> Dict[str, Any]:
-        """Make a GET request"""
+        """Make a GET request.
+
+        Args:
+            endpoint: API endpoint path (e.g., "/v1/hosts").
+            params: Optional query parameters.
+            timeout: Request timeout in seconds.
+
+        Returns:
+            Parsed response as a dictionary.
+        """
         return self._request("GET", endpoint, params=params, timeout=timeout)
 
     def post(
@@ -190,7 +212,17 @@ class DefinedClient:
         params: Optional[Dict[str, Any]] = None,
         timeout: int = 30,
     ) -> Dict[str, Any]:
-        """Make a POST request"""
+        """Make a POST request.
+
+        Args:
+            endpoint: API endpoint path.
+            json: Optional JSON body to send.
+            params: Optional query parameters.
+            timeout: Request timeout in seconds.
+
+        Returns:
+            Parsed response as a dictionary.
+        """
         return self._request("POST", endpoint, params=params, json=json, timeout=timeout)
 
     def put(
@@ -200,7 +232,17 @@ class DefinedClient:
         params: Optional[Dict[str, Any]] = None,
         timeout: int = 30,
     ) -> Dict[str, Any]:
-        """Make a PUT request"""
+        """Make a PUT request.
+
+        Args:
+            endpoint: API endpoint path.
+            json: Optional JSON body to send.
+            params: Optional query parameters.
+            timeout: Request timeout in seconds.
+
+        Returns:
+            Parsed response as a dictionary.
+        """
         return self._request("PUT", endpoint, params=params, json=json, timeout=timeout)
 
     def delete(
@@ -209,19 +251,39 @@ class DefinedClient:
         params: Optional[Dict[str, Any]] = None,
         timeout: int = 30,
     ) -> Dict[str, Any]:
-        """Make a DELETE request"""
+        """Make a DELETE request.
+
+        Args:
+            endpoint: API endpoint path.
+            params: Optional query parameters.
+            timeout: Request timeout in seconds.
+
+        Returns:
+            Parsed response as a dictionary.
+        """
         return self._request("DELETE", endpoint, params=params, timeout=timeout)
 
     def close(self) -> None:
-        """Close the session"""
+        """Close the underlying HTTP session.
+
+        This releases network resources held by the :class:`requests.Session`.
+        """
         self.session.close()
 
     def __enter__(self) -> "DefinedClient":
-        """Context manager entry"""
+        """Enter context manager and return client instance.
+
+        Returns:
+            The client instance (self).
+        """
         return self
 
     def __exit__(
         self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]
     ) -> None:
-        """Context manager exit"""
+        """Exit context manager and close the session.
+
+        Any exception raised inside the context is propagated after
+        closing the session.
+        """
         self.close()

@@ -7,13 +7,18 @@ if TYPE_CHECKING:
 
 
 class BaseResource:
-    """Base resource class with common functionality
+    """Base resource class with common functionality.
 
-    Args:
-        client: The `DefinedClient` instance used to perform requests.
+    Provides a small helper to build query parameters and stores a reference
+    to the :class:`DefinedClient` used to perform HTTP requests.
     """
 
     def __init__(self, client: "DefinedClient") -> None:
+        """Create a new resource wrapper.
+
+        Args:
+            client: The :class:`DefinedClient` instance used to make requests.
+        """
         self.client: "DefinedClient" = client
 
     def _build_params(self, **kwargs) -> Dict[str, Any]:
@@ -37,10 +42,24 @@ class Hosts(BaseResource):
         tags: Optional[List[str]] = None,
         config_overrides: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
-        """
-        Create a new host, lighthouse, or relay
+        """Create a new host, lighthouse, or relay.
 
-        Token scope required: hosts:create
+        Token scope required: ``hosts:create``.
+
+        Args:
+            name: Name of the host.
+            network_id: Network ID to attach the host to.
+            role_id: Optional role ID to assign.
+            ip_address: Optional static IP to assign.
+            static_addresses: Optional list of static addresses.
+            listen_port: UDP port for nebula.
+            is_lighthouse: True to create a lighthouse.
+            is_relay: True to create a relay.
+            tags: Optional list of tags.
+            config_overrides: Optional config overrides for the host.
+
+        Returns:
+            The created host data as a dictionary (or empty dict if not provided).
         """
         body: Dict[str, Any] = {
             "name": name,
@@ -78,10 +97,12 @@ class Hosts(BaseResource):
         filter_metadata_update_available: Optional[bool] = None,
         filter_role_id: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """
-        Get a paginated list of hosts
+        """Get a paginated list of hosts.
 
-        Token scope required: hosts:list
+        Token scope required: ``hosts:list``.
+
+        Returns:
+            Raw API response containing pagination metadata and host list.
         """
         params = self._build_params(
             includeCounts=include_counts,
@@ -102,19 +123,29 @@ class Hosts(BaseResource):
         return response
 
     def get(self, host_id: str) -> Dict[str, Any]:
-        """
-        Get a specific host
+        """Get a specific host by ID.
 
-        Token scope required: hosts:read
+        Token scope required: ``hosts:read``.
+
+        Args:
+            host_id: The host identifier.
+
+        Returns:
+            Host data as a dictionary (or empty dict if not provided).
         """
         response: Dict[str, Any] = self.client.get(f"/v1/hosts/{host_id}")
         return response.get("data", {})
 
     def delete(self, host_id: str) -> Dict[str, Any]:
-        """
-        Delete a host
+        """Delete a host.
 
-        Token scope required: hosts:delete
+        Token scope required: ``hosts:delete``.
+
+        Args:
+            host_id: The host identifier.
+
+        Returns:
+            API response data (often empty dict).
         """
         response: Dict[str, Any] = self.client.delete(f"/v1/hosts/{host_id}")
         return response.get("data", {})
@@ -129,10 +160,21 @@ class Hosts(BaseResource):
         tags: Optional[List[str]] = None,
         config_overrides: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
-        """
-        Edit a host
+        """Edit a host.
 
-        Token scope required: hosts:update
+        Token scope required: ``hosts:update``.
+
+        Args:
+            host_id: ID of the host to update.
+            name: Optional new name.
+            role_id: Optional role ID.
+            static_addresses: Optional list of static addresses.
+            listen_port: Optional listen port.
+            tags: Optional list of tags.
+            config_overrides: Optional config overrides.
+
+        Returns:
+            Updated host data as a dictionary (or empty dict if not provided).
         """
         body: Dict[str, Any] = {}
 
@@ -153,19 +195,29 @@ class Hosts(BaseResource):
         return response.get("data", {})
 
     def block(self, host_id: str) -> Dict[str, Any]:
-        """
-        Block a host
+        """Block a host.
 
-        Token scope required: hosts:block
+        Token scope required: ``hosts:block``.
+
+        Args:
+            host_id: The host identifier.
+
+        Returns:
+            API response data.
         """
         response: Dict[str, Any] = self.client.post(f"/v1/hosts/{host_id}/block")
         return response.get("data", {})
 
     def unblock(self, host_id: str) -> Dict[str, Any]:
-        """
-        Unblock a host
+        """Unblock a host.
 
-        Token scope required: hosts:unblock
+        Token scope required: ``hosts:unblock``.
+
+        Args:
+            host_id: The host identifier.
+
+        Returns:
+            API response data.
         """
         response: Dict[str, Any] = self.client.post(f"/v1/hosts/{host_id}/unblock")
         return response.get("data", {})
@@ -173,12 +225,17 @@ class Hosts(BaseResource):
     def debug_command(
         self, host_id: str, command_type: str, **kwargs
     ) -> Dict[str, Any]:
-        """
-        Send debug commands to a host
+        """Send debug commands to a host.
 
-        Token scope required: hosts:debug
+        Token scope required: ``hosts:debug``.
 
-        command_type can be: StreamLogs, CreateTunnel, PrintTunnel, PrintCert, QueryLighthouse, DebugStack
+        Args:
+            host_id: The host identifier.
+            command_type: The debug command to run (e.g. ``StreamLogs``).
+            **kwargs: Command-specific arguments passed under the ``args`` key.
+
+        Returns:
+            Command response data.
         """
         body: Dict[str, Any] = {"command": command_type}
 
@@ -189,10 +246,15 @@ class Hosts(BaseResource):
         return response.get("data", {})
 
     def create_enrollment_code(self, host_id: str) -> Dict[str, Any]:
-        """
-        Create an enrollment code for a host
+        """Create an enrollment code for a host.
 
-        Token scope required: hosts:enroll
+        Token scope required: ``hosts:enroll``.
+
+        Args:
+            host_id: The host identifier.
+
+        Returns:
+            Enrollment code data.
         """
         response: Dict[str, Any] = self.client.post(f"/v1/hosts/{host_id}/enrollment-code")
         return response.get("data", {})
@@ -210,10 +272,12 @@ class Hosts(BaseResource):
         tags: Optional[List[str]] = None,
         config_overrides: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
-        """
-        Create a host and enrollment code in one request
+        """Create a host and an enrollment code in one request.
 
-        Token scopes required: hosts:create, hosts:enroll
+        Token scopes required: ``hosts:create``, ``hosts:enroll``.
+
+        Returns:
+            Created host and enrollment code data.
         """
         body: Dict[str, Any] = {
             "name": name,
@@ -242,10 +306,15 @@ class Roles(BaseResource):
     """Role management endpoints"""
 
     def create(self, name: str) -> Dict[str, Any]:
-        """
-        Create a new role
+        """Create a new role.
 
-        Token scope required: roles:create
+        Token scope required: ``roles:create``.
+
+        Args:
+            name: Name of the role.
+
+        Returns:
+            Created role data as a dictionary.
         """
         body: Dict[str, Any] = {"name": name}
         response: Dict[str, Any] = self.client.post("/v1/roles", json=body)
@@ -257,10 +326,12 @@ class Roles(BaseResource):
         cursor: Optional[str] = None,
         page_size: int = 25,
     ) -> Dict[str, Any]:
-        """
-        Get a paginated list of roles
+        """Get a paginated list of roles.
 
-        Token scope required: roles:list
+        Token scope required: ``roles:list``.
+
+        Returns:
+            Raw API response containing list and pagination metadata.
         """
         params = self._build_params(
             includeCounts=include_counts,
@@ -271,10 +342,15 @@ class Roles(BaseResource):
         return response
 
     def get(self, role_id: str) -> Dict[str, Any]:
-        """
-        Get a specific role
+        """Get a specific role by ID.
 
-        Token scope required: roles:read
+        Token scope required: ``roles:read``.
+
+        Args:
+            role_id: The role identifier.
+
+        Returns:
+            Role data as a dictionary (or empty dict if not provided).
         """
         response: Dict[str, Any] = self.client.get(f"/v1/roles/{role_id}")
         return response.get("data", {})
@@ -282,10 +358,12 @@ class Roles(BaseResource):
     def update(
         self, role_id: str, name: Optional[str] = None, description: Optional[str] = None
     ) -> Dict[str, Any]:
-        """
-        Edit a role
+        """Edit a role.
 
-        Token scope required: roles:update
+        Token scope required: ``roles:update``.
+
+        Returns:
+            Updated role data as a dictionary.
         """
         body: Dict[str, Any] = {}
         if name is not None:
@@ -297,10 +375,15 @@ class Roles(BaseResource):
         return response.get("data", {})
 
     def delete(self, role_id: str) -> Dict[str, Any]:
-        """
-        Delete a role
+        """Delete a role.
 
-        Token scope required: roles:delete
+        Token scope required: ``roles:delete``.
+
+        Args:
+            role_id: The role identifier.
+
+        Returns:
+            API response data.
         """
         response: Dict[str, Any] = self.client.delete(f"/v1/roles/{role_id}")
         return response.get("data", {})
@@ -310,10 +393,15 @@ class Routes(BaseResource):
     """Route management endpoints"""
 
     def create(self, name: str) -> Dict[str, Any]:
-        """
-        Create a new route
+        """Create a new route.
 
-        Token scope required: routes:create
+        Token scope required: ``routes:create``.
+
+        Args:
+            name: Name of the route.
+
+        Returns:
+            Created route data as a dictionary.
         """
         body: Dict[str, Any] = {"name": name}
         response: Dict[str, Any] = self.client.post("/v1/routes", json=body)
@@ -325,10 +413,12 @@ class Routes(BaseResource):
         cursor: Optional[str] = None,
         page_size: int = 25,
     ) -> Dict[str, Any]:
-        """
-        Get a paginated list of routes
+        """Get a paginated list of routes.
 
-        Token scope required: routes:list
+        Token scope required: ``routes:list``.
+
+        Returns:
+            Raw API response containing the list and pagination metadata.
         """
         params = self._build_params(
             includeCounts=include_counts,
@@ -339,10 +429,15 @@ class Routes(BaseResource):
         return response
 
     def get(self, route_id: str) -> Dict[str, Any]:
-        """
-        Get a specific route
+        """Get a specific route by ID.
 
-        Token scope required: routes:read
+        Token scope required: ``routes:read``.
+
+        Args:
+            route_id: The route identifier.
+
+        Returns:
+            Route data as a dictionary (or empty dict if not provided).
         """
         response: Dict[str, Any] = self.client.get(f"/v1/routes/{route_id}")
         return response.get("data", {})
@@ -350,10 +445,12 @@ class Routes(BaseResource):
     def update(
         self, route_id: str, name: Optional[str] = None, description: Optional[str] = None
     ) -> Dict[str, Any]:
-        """
-        Edit a route
+        """Edit a route.
 
-        Token scope required: routes:update
+        Token scope required: ``routes:update``.
+
+        Returns:
+            Updated route data as a dictionary.
         """
         body: Dict[str, Any] = {"name": name} if name else {}
         if description is not None:
@@ -363,10 +460,15 @@ class Routes(BaseResource):
         return response.get("data", {})
 
     def delete(self, route_id: str) -> Dict[str, Any]:
-        """
-        Delete a route
+        """Delete a route.
 
-        Token scope required: routes:delete
+        Token scope required: ``routes:delete``.
+
+        Args:
+            route_id: The route identifier.
+
+        Returns:
+            API response data.
         """
         response: Dict[str, Any] = self.client.delete(f"/v1/routes/{route_id}")
         return response.get("data", {})
@@ -381,10 +483,17 @@ class Tags(BaseResource):
         description: Optional[str] = None,
         config_overrides: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
-        """
-        Create a new tag
+        """Create a new tag.
 
-        Token scope required: tags:create
+        Token scope required: ``tags:create``.
+
+        Args:
+            name: Tag name in ``key:value`` format.
+            description: Optional description.
+            config_overrides: Optional config overrides.
+
+        Returns:
+            Created tag data as a dictionary.
         """
         body: Dict[str, Any] = {"name": name}
         if description:
@@ -401,10 +510,12 @@ class Tags(BaseResource):
         cursor: Optional[str] = None,
         page_size: int = 25,
     ) -> Dict[str, Any]:
-        """
-        Get a paginated list of tags
+        """Get a paginated list of tags.
 
-        Token scope required: tags:list
+        Token scope required: ``tags:list``.
+
+        Returns:
+            Raw API response containing tag list and pagination metadata.
         """
         params = self._build_params(
             includeCounts=include_counts,
@@ -415,13 +526,15 @@ class Tags(BaseResource):
         return response
 
     def get(self, tag: str) -> Dict[str, Any]:
-        """
-        Get a specific tag
+        """Get a specific tag.
 
-        Token scope required: tags:read
+        Token scope required: ``tags:read``.
 
         Args:
-            tag: Tag name in format 'key:value'
+            tag: Tag name in format 'key:value'.
+
+        Returns:
+            Tag data as a dictionary (or empty dict if not provided).
         """
         response: Dict[str, Any] = self.client.get(f"/v1/tags/{tag}")
         return response.get("data", {})
@@ -434,17 +547,19 @@ class Tags(BaseResource):
         before: Optional[str] = None,
         after: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """
-        Edit a tag
+        """Edit a tag.
 
-        Token scope required: tags:update
+        Token scope required: ``tags:update``.
 
         Args:
-            tag: Tag name in format 'key:value'
-            description: Tag description
-            config_overrides: Config overrides for the tag
-            before: Tag name to insert this tag before (for priority ordering)
-            after: Tag name to insert this tag after (for priority ordering)
+            tag: Tag name in format 'key:value'.
+            description: Optional description.
+            config_overrides: Optional config overrides.
+            before: Optional tag to order before.
+            after: Optional tag to order after.
+
+        Returns:
+            Updated tag data as a dictionary.
         """
         body: Dict[str, Any] = {}
         if description is not None:
@@ -460,13 +575,15 @@ class Tags(BaseResource):
         return response.get("data", {})
 
     def delete(self, tag: str) -> Dict[str, Any]:
-        """
-        Delete a tag
+        """Delete a tag.
 
-        Token scope required: tags:delete
+        Token scope required: ``tags:delete``.
 
         Args:
-            tag: Tag name in format 'key:value'
+            tag: Tag name in format 'key:value'.
+
+        Returns:
+            API response data.
         """
         response: Dict[str, Any] = self.client.delete(f"/v1/tags/{tag}")
         return response.get("data", {})
@@ -476,14 +593,16 @@ class Networks(BaseResource):
     """Network management endpoints"""
 
     def create(self, name: str, cidr: str) -> Dict[str, Any]:
-        """
-        Create a new network
+        """Create a new network.
 
-        Token scope required: networks:create
+        Token scope required: ``networks:create``.
 
         Args:
-            name: Network name
-            cidr: Network CIDR in format like '100.100.0.0/24'
+            name: Network name.
+            cidr: Network CIDR in format like '100.100.0.0/24'.
+
+        Returns:
+            Created network data as a dictionary.
         """
         body: Dict[str, Any] = {"name": name, "cidr": cidr}
         response: Dict[str, Any] = self.client.post("/v1/networks", json=body)
@@ -495,10 +614,12 @@ class Networks(BaseResource):
         cursor: Optional[str] = None,
         page_size: int = 25,
     ) -> Dict[str, Any]:
-        """
-        Get a paginated list of networks
+        """Get a paginated list of networks.
 
-        Token scope required: networks:list
+        Token scope required: ``networks:list``.
+
+        Returns:
+            Raw API response containing networks and pagination metadata.
         """
         params = self._build_params(
             includeCounts=include_counts,
@@ -509,10 +630,15 @@ class Networks(BaseResource):
         return response
 
     def get(self, network_id: str) -> Dict[str, Any]:
-        """
-        Get a specific network
+        """Get a specific network by ID.
 
-        Token scope required: networks:read
+        Token scope required: ``networks:read``.
+
+        Args:
+            network_id: The network identifier.
+
+        Returns:
+            Network data as a dictionary (or empty dict if not provided).
         """
         response: Dict[str, Any] = self.client.get(f"/v1/networks/{network_id}")
         return response.get("data", {})
@@ -520,15 +646,17 @@ class Networks(BaseResource):
     def update(
         self, network_id: str, name: Optional[str] = None, cidr: Optional[str] = None
     ) -> Dict[str, Any]:
-        """
-        Edit a network
+        """Edit a network.
 
-        Token scope required: networks:update
+        Token scope required: ``networks:update``.
 
         Args:
-            network_id: Network ID
-            name: Network name
-            cidr: Network CIDR
+            network_id: Network ID.
+            name: Optional new network name.
+            cidr: Optional new network CIDR.
+
+        Returns:
+            Updated network data as a dictionary.
         """
         body: Dict[str, Any] = {}
         if name is not None:
@@ -551,13 +679,15 @@ class AuditLogs(BaseResource):
         filter_target_id: Optional[str] = None,
         filter_target_type: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """
-        Get a paginated list of audit logs
+        """Get a paginated list of audit logs.
 
-        Token scope required: audit-logs:list
+        Token scope required: ``audit-logs:list``.
 
         Args:
-            filter_target_type: One of: apiKey, host, network, role, user, ca, oidcProvider
+            filter_target_type: One of: apiKey, host, network, role, user, ca, oidcProvider.
+
+        Returns:
+            Raw API response containing audit log entries and pagination metadata.
         """
         params = self._build_params(
             includeCounts=include_counts,
@@ -576,10 +706,12 @@ class Downloads(BaseResource):
     """Software downloads endpoint"""
 
     def list(self) -> Dict[str, Any]:
-        """
-        Get a list of software download links and info
+        """Get a list of software download links and info.
 
         This endpoint is unauthenticated.
+
+        Returns:
+            Download links and metadata as a dictionary.
         """
         response: Dict[str, Any] = self.client.get("/v1/downloads")
         return response.get("data", {})
