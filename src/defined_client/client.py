@@ -41,6 +41,7 @@ class DefinedClient:
             {
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
+                "Accept": "application/json",
             }
         )
 
@@ -101,7 +102,11 @@ class DefinedClient:
     def _handle_response(self, response: requests.Response) -> Dict[str, Any]:
         """Handle the API response and raise errors if needed"""
 
+        # Treat successful responses with no content as an empty dict
         if response.ok:
+            # Some endpoints may legitimately return no content (204)
+            if response.status_code == 204 or not response.content:
+                return {}
             try:
                 return response.json()
             except ValueError:
