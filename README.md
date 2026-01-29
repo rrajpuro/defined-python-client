@@ -95,20 +95,33 @@ from defined_client import (
     ValidationError,
     AuthenticationError,
     NotFoundError,
+    PermissionDeniedError,
+    ServerError,
 )
 
 try:
-    host = client.hosts.get("non-existent-host")
+    with DefinedClient(api_key) as client:
+        client.hosts.get("non-existent-host")
 except NotFoundError as e:
-    print(f"Host not found: {e.message}")
+    print("Host not found:", e.message)
 except ValidationError as e:
-    print(f"Validation error: {e.message}")
-    print(f"Details: {e.errors}")
+    print("Validation error:", e.message)
+    print("Error details:", e.errors)
 except AuthenticationError as e:
-    print(f"Authentication failed: {e.message}")
+    print("Authentication failed:", e.message)
+except PermissionDeniedError as e:
+    print("Permission denied:", e.message)
+except ServerError as e:
+    print("Server error:", e.message)
 except DefinedClientError as e:
-    print(f"API error: {e.message}")
+    print("API error:", e.message)
 ```
+
+Notes:
+- List endpoints (e.g. ``client.hosts.list()``) return the raw API response which includes
+    pagination metadata under ``metadata`` as well as the list under ``data``.
+- Many individual resource methods return the value of the API ``data`` key; if the server
+    returned no ``data`` key (or a 204 No Content), the client will return an empty dictionary.
 
 ## Pagination
 

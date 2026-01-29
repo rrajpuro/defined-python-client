@@ -1,6 +1,6 @@
 """Example usage of the Defined Networking API client"""
 
-from defined_client import DefinedClient, DefinedClientError, ValidationError, AuthenticationError, NotFoundError
+from defined_client import DefinedClient, DefinedClientError, ValidationError, AuthenticationError, NotFoundError, PermissionDeniedError, ServerError
 
 # Initialize the client with your API key
 api_key = "your-api-key-here"
@@ -203,5 +203,9 @@ except ValidationError as e:
     print("Error details:", e.errors)
 except AuthenticationError as e:
     print("Authentication failed:", e.message)
+except PermissionDeniedError as e:
+    print("Permission denied:", e.message)
+except ServerError as e:
+    print("Server error:", e.message)
 except DefinedClientError as e:
     print("API error:", e.message)
