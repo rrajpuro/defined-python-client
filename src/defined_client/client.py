@@ -27,7 +27,15 @@ class DefinedClient:
 
     BASE_URL = "https://api.defined.net"
 
-    def __init__(self, api_key: str, base_url: Optional[str] = None):
+    hosts: "Hosts"
+    roles: "Roles"
+    routes: "Routes"
+    tags: "Tags"
+    networks: "Networks"
+    audit_logs: "AuditLogs"
+    downloads: "Downloads"
+
+    def __init__(self, api_key: str, base_url: Optional[str] = None) -> None:
         """
         Initialize the Defined Networking API client
 
@@ -35,9 +43,9 @@ class DefinedClient:
             api_key: API key from https://admin.defined.net/settings/api-keys
             base_url: Optional custom base URL (default: https://api.defined.net)
         """
-        self.api_key = api_key
-        self.base_url = base_url or self.BASE_URL
-        self.session = requests.Session()
+        self.api_key: str = api_key
+        self.base_url: str = base_url or self.BASE_URL
+        self.session: requests.Session = requests.Session()
         self.session.headers.update(
             {
                 "Authorization": f"Bearer {api_key}",
@@ -204,14 +212,16 @@ class DefinedClient:
         """Make a DELETE request"""
         return self._request("DELETE", endpoint, params=params, timeout=timeout)
 
-    def close(self):
+    def close(self) -> None:
         """Close the session"""
         self.session.close()
 
-    def __enter__(self):
+    def __enter__(self) -> "DefinedClient":
         """Context manager entry"""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]
+    ) -> None:
         """Context manager exit"""
         self.close()

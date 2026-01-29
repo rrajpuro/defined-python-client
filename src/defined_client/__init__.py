@@ -15,7 +15,7 @@ from .exceptions import (
 try:
     __version__ = version("defined-client")
 except PackageNotFoundError:
-    __version__ = "0.0.0"
+    __version__: str = "0.0.0"
 
 __all__ = [
     "DefinedClient",
