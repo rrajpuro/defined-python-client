@@ -3,7 +3,14 @@
 from importlib.metadata import version, PackageNotFoundError
 
 from .client import DefinedClient
-from .exceptions import DefinedClientError, ValidationError, NotFoundError, AuthenticationError
+from .exceptions import (
+    DefinedClientError,
+    ValidationError,
+    NotFoundError,
+    AuthenticationError,
+    PermissionDeniedError,
+    ServerError,
+)
 
 try:
     __version__ = version("defined-client")
@@ -16,4 +23,6 @@ __all__ = [
     "ValidationError",
     "NotFoundError",
     "AuthenticationError",
+    "PermissionDeniedError",
+    "ServerError",
 ]

@@ -55,7 +55,7 @@ class Hosts(BaseResource):
             body["configOverrides"] = config_overrides
 
         response = self.client.post("/v1/hosts", json=body)
-        return response.get("data")
+        return response.get("data", {})
 
     def list(
         self,
@@ -101,7 +101,7 @@ class Hosts(BaseResource):
         Token scope required: hosts:read
         """
         response = self.client.get(f"/v1/hosts/{host_id}")
-        return response.get("data")
+        return response.get("data", {})
 
     def delete(self, host_id: str) -> Dict[str, Any]:
         """
@@ -110,7 +110,7 @@ class Hosts(BaseResource):
         Token scope required: hosts:delete
         """
         response = self.client.delete(f"/v1/hosts/{host_id}")
-        return response.get("data")
+        return response.get("data", {})
 
     def update(
         self,
@@ -143,7 +143,7 @@ class Hosts(BaseResource):
             body["configOverrides"] = config_overrides
 
         response = self.client.put(f"/v2/hosts/{host_id}", json=body)
-        return response.get("data")
+        return response.get("data", {})
 
     def block(self, host_id: str) -> Dict[str, Any]:
         """
@@ -152,7 +152,7 @@ class Hosts(BaseResource):
         Token scope required: hosts:block
         """
         response = self.client.post(f"/v1/hosts/{host_id}/block")
-        return response.get("data")
+        return response.get("data", {})
 
     def unblock(self, host_id: str) -> Dict[str, Any]:
         """
@@ -161,7 +161,7 @@ class Hosts(BaseResource):
         Token scope required: hosts:unblock
         """
         response = self.client.post(f"/v1/hosts/{host_id}/unblock")
-        return response.get("data")
+        return response.get("data", {})
 
     def debug_command(
         self, host_id: str, command_type: str, **kwargs
@@ -179,7 +179,7 @@ class Hosts(BaseResource):
             body["args"] = kwargs
 
         response = self.client.post(f"/v1/hosts/{host_id}/command", json=body)
-        return response.get("data")
+        return response.get("data", {})
 
     def create_enrollment_code(self, host_id: str) -> Dict[str, Any]:
         """
@@ -188,7 +188,7 @@ class Hosts(BaseResource):
         Token scope required: hosts:enroll
         """
         response = self.client.post(f"/v1/hosts/{host_id}/enrollment-code")
-        return response.get("data")
+        return response.get("data", {})
 
     def create_with_enrollment(
         self,
@@ -228,7 +228,7 @@ class Hosts(BaseResource):
             body["configOverrides"] = config_overrides
 
         response = self.client.post("/v1/host-and-enrollment-code", json=body)
-        return response.get("data")
+        return response.get("data", {})
 
 
 class Roles(BaseResource):
@@ -242,7 +242,7 @@ class Roles(BaseResource):
         """
         body: Dict[str, Any] = {"name": name}
         response = self.client.post("/v1/roles", json=body)
-        return response.get("data")
+        return response.get("data", {})
 
     def list(
         self,
@@ -270,7 +270,7 @@ class Roles(BaseResource):
         Token scope required: roles:read
         """
         response = self.client.get(f"/v1/roles/{role_id}")
-        return response.get("data")
+        return response.get("data", {})
 
     def update(
         self, role_id: str, name: Optional[str] = None, description: Optional[str] = None
@@ -287,7 +287,7 @@ class Roles(BaseResource):
             body["description"] = description
 
         response = self.client.put(f"/v1/roles/{role_id}", json=body)
-        return response.get("data")
+        return response.get("data", {})
 
     def delete(self, role_id: str) -> Dict[str, Any]:
         """
@@ -296,7 +296,7 @@ class Roles(BaseResource):
         Token scope required: roles:delete
         """
         response = self.client.delete(f"/v1/roles/{role_id}")
-        return response.get("data")
+        return response.get("data", {})
 
 
 class Routes(BaseResource):
@@ -310,7 +310,7 @@ class Routes(BaseResource):
         """
         body: Dict[str, Any] = {"name": name}
         response = self.client.post("/v1/routes", json=body)
-        return response.get("data")
+        return response.get("data", {})
 
     def list(
         self,
@@ -338,7 +338,7 @@ class Routes(BaseResource):
         Token scope required: routes:read
         """
         response = self.client.get(f"/v1/routes/{route_id}")
-        return response.get("data")
+        return response.get("data", {})
 
     def update(
         self, route_id: str, name: Optional[str] = None, description: Optional[str] = None
@@ -353,7 +353,7 @@ class Routes(BaseResource):
             body["description"] = description
 
         response = self.client.put(f"/v1/routes/{route_id}", json=body)
-        return response.get("data")
+        return response.get("data", {})
 
     def delete(self, route_id: str) -> Dict[str, Any]:
         """
@@ -362,7 +362,7 @@ class Routes(BaseResource):
         Token scope required: routes:delete
         """
         response = self.client.delete(f"/v1/routes/{route_id}")
-        return response.get("data")
+        return response.get("data", {})
 
 
 class Tags(BaseResource):
@@ -386,7 +386,7 @@ class Tags(BaseResource):
             body["configOverrides"] = config_overrides
 
         response = self.client.post("/v1/tags", json=body)
-        return response.get("data")
+        return response.get("data", {})
 
     def list(
         self,
@@ -417,7 +417,7 @@ class Tags(BaseResource):
             tag: Tag name in format 'key:value'
         """
         response = self.client.get(f"/v1/tags/{tag}")
-        return response.get("data")
+        return response.get("data", {})
 
     def update(
         self,
@@ -450,7 +450,7 @@ class Tags(BaseResource):
             body["after"] = after
 
         response = self.client.put(f"/v1/tags/{tag}", json=body)
-        return response.get("data")
+        return response.get("data", {})
 
     def delete(self, tag: str) -> Dict[str, Any]:
         """
@@ -462,7 +462,7 @@ class Tags(BaseResource):
             tag: Tag name in format 'key:value'
         """
         response = self.client.delete(f"/v1/tags/{tag}")
-        return response.get("data")
+        return response.get("data", {})
 
 
 class Networks(BaseResource):
@@ -480,7 +480,7 @@ class Networks(BaseResource):
         """
         body: Dict[str, Any] = {"name": name, "cidr": cidr}
         response = self.client.post("/v1/networks", json=body)
-        return response.get("data")
+        return response.get("data", {})
 
     def list(
         self,
@@ -508,7 +508,7 @@ class Networks(BaseResource):
         Token scope required: networks:read
         """
         response = self.client.get(f"/v1/networks/{network_id}")
-        return response.get("data")
+        return response.get("data", {})
 
     def update(
         self, network_id: str, name: Optional[str] = None, cidr: Optional[str] = None
@@ -530,7 +530,7 @@ class Networks(BaseResource):
             body["cidr"] = cidr
 
         response = self.client.put(f"/v1/networks/{network_id}", json=body)
-        return response.get("data")
+        return response.get("data", {})
 
 
 class AuditLogs(BaseResource):
@@ -575,4 +575,4 @@ class Downloads(BaseResource):
         This endpoint is unauthenticated.
         """
         response = self.client.get("/v1/downloads")
-        return response.get("data")
+        return response.get("data", {})

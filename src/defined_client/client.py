@@ -8,6 +8,7 @@ from .exceptions import (
     ValidationError,
     AuthenticationError,
     NotFoundError,
+    PermissionDeniedError,
     ServerError,
 )
 from .resources import (
@@ -136,6 +137,12 @@ class DefinedClient:
         if status == 401:
             raise AuthenticationError(
                 "Authentication failed",
+                status_code=status,
+                response=response,
+            )
+        if status == 403:
+            raise PermissionDeniedError(
+                "Permission denied",
                 status_code=status,
                 response=response,
             )
