@@ -2,7 +2,6 @@
 
 import requests
 from typing import Optional, Dict, Any, List
-from urllib.parse import urljoin
 
 from .exceptions import (
     DefinedClientError,
@@ -54,7 +53,8 @@ class DefinedClient:
         self.audit_logs = AuditLogs(self)
         self.downloads = Downloads(self)
 
-    def request(
+
+    def _request(
         self,
         method: str,
         endpoint: str,
@@ -82,7 +82,7 @@ class DefinedClient:
             ServerError: If server returns 5xx error
             DefinedClientError: For other API errors
         """
-        url = urljoin(self.base_url, endpoint)
+        url = f"{self.base_url.rstrip('/')}/{endpoint.lstrip('/')}"
 
         try:
             response = self.session.request(
@@ -92,50 +92,67 @@ class DefinedClient:
                 json=json,
                 timeout=timeout,
             )
+        except requests.exceptions.RequestException as exc:
+            raise DefinedClientError("Network error") from exc
 
-            # Handle errors based on status code
-            if response.status_code == 400:
-                error_data = response.json()
-                errors = error_data.get("errors", [])
-                raise ValidationError(
-                    "Validation error",
-                    status_code=400,
-                    errors=errors,
-                )
-            elif response.status_code == 401:
-                raise AuthenticationError(
-                    "Authentication failed. Check your API key.",
-                    status_code=401,
-                )
-            elif response.status_code == 404:
-                raise NotFoundError(
-                    "Resource not found",
-                    status_code=404,
-                )
-            elif 500 <= response.status_code < 600:
-                raise ServerError(
-                    f"Server error: {response.status_code}",
-                    status_code=response.status_code,
-                )
-            elif not response.ok:
-                raise DefinedClientError(
-                    f"API request failed with status {response.status_code}",
-                    status_code=response.status_code,
-                )
+        return self._handle_response(response)
 
-            # Return response data
+
+    def _handle_response(self, response: requests.Response) -> Dict[str, Any]:
+        """Handle the API response and raise errors if needed"""
+
+        if response.ok:
             try:
                 return response.json()
             except ValueError:
-                # Handle responses with no JSON content
-                return {}
+                raise DefinedClientError(
+                    "Invalid JSON response",
+                    status_code=response.status_code,
+                    response=response,
+                )
 
-        except requests.exceptions.Timeout:
-            raise DefinedClientError("Request timeout")
-        except requests.exceptions.ConnectionError:
-            raise DefinedClientError("Connection error")
-        except requests.exceptions.RequestException as e:
-            raise DefinedClientError(f"Request failed: {str(e)}")
+        # Parse error payload safely
+        try:
+            payload = response.json()
+        except ValueError:
+            payload = {}
+
+        errors = payload.get("errors")
+
+        status = response.status_code
+
+        if status == 400:
+            raise ValidationError(
+                "Validation error",
+                status_code=status,
+                errors=errors,
+                response=response,
+            )
+        if status == 401:
+            raise AuthenticationError(
+                "Authentication failed",
+                status_code=status,
+                response=response,
+            )
+        if status == 404:
+            raise NotFoundError(
+                "Resource not found",
+                status_code=status,
+                response=response,
+            )
+        if 500 <= status < 600:
+            raise ServerError(
+                "Server error",
+                status_code=status,
+                response=response,
+            )
+
+        raise DefinedClientError(
+            f"Unexpected API error ({status})",
+            status_code=status,
+            response=response,
+        )
+
 
     def get(
         self,
@@ -144,7 +161,7 @@ class DefinedClient:
         timeout: int = 30,
     ) -> Dict[str, Any]:
         """Make a GET request"""
-        return self.request("GET", endpoint, params=params, timeout=timeout)
+        return self._request("GET", endpoint, params=params, timeout=timeout)
 
     def post(
         self,
@@ -154,7 +171,7 @@ class DefinedClient:
         timeout: int = 30,
     ) -> Dict[str, Any]:
         """Make a POST request"""
-        return self.request("POST", endpoint, params=params, json=json, timeout=timeout)
+        return self._request("POST", endpoint, params=params, json=json, timeout=timeout)
 
     def put(
         self,
@@ -164,7 +181,7 @@ class DefinedClient:
         timeout: int = 30,
     ) -> Dict[str, Any]:
         """Make a PUT request"""
-        return self.request("PUT", endpoint, params=params, json=json, timeout=timeout)
+        return self._request("PUT", endpoint, params=params, json=json, timeout=timeout)
 
     def delete(
         self,
@@ -173,7 +190,7 @@ class DefinedClient:
         timeout: int = 30,
     ) -> Dict[str, Any]:
         """Make a DELETE request"""
-        return self.request("DELETE", endpoint, params=params, timeout=timeout)
+        return self._request("DELETE", endpoint, params=params, timeout=timeout)
 
     def close(self):
         """Close the session"""
