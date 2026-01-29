@@ -443,18 +443,42 @@ class Routes(BaseResource):
         return response.get("data", {})
 
     def update(
-        self, route_id: str, name: Optional[str] = None, description: Optional[str] = None
+        self,
+        route_id: str,
+        name: str,
+        description: Optional[str] = None,
+        router_host_id: Optional[str] = None,
+        routable_cidrs: Optional[Dict[str, Dict[str, bool]]] = None,
+        firewall_rules: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         """Edit a route.
 
+        **Caution:** Any properties not provided in the request will be reset to
+        their default values. If only changing one firewall rule, be sure to include
+        the others as well, otherwise they will be removed.
+
         Token scope required: ``routes:update``.
+
+        Args:
+            route_id: ID of the route to update.
+            name: Name of the route (required, max 50 chars).
+            description: Optional description (max 255 chars).
+            router_host_id: Optional router host ID.
+            routable_cidrs: Optional dict mapping CIDR ranges to install flags.
+            firewall_rules: Optional list of firewall rule objects.
 
         Returns:
             Updated route data as a dictionary.
         """
-        body: Dict[str, Any] = {"name": name} if name else {}
+        body: Dict[str, Any] = {"name": name}
         if description is not None:
             body["description"] = description
+        if router_host_id is not None:
+            body["routerHostID"] = router_host_id
+        if routable_cidrs is not None:
+            body["routableCIDRs"] = routable_cidrs
+        if firewall_rules is not None:
+            body["firewallRules"] = firewall_rules
 
         response: Dict[str, Any] = self.client.put(f"/v1/routes/{route_id}", json=body)
         return response.get("data", {})
