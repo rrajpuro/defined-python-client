@@ -392,18 +392,38 @@ class Roles(BaseResource):
 class Routes(BaseResource):
     """Route management endpoints"""
 
-    def create(self, name: str) -> Dict[str, Any]:
+    def create(
+        self,
+        name: str,
+        description: Optional[str] = None,
+        router_host_id: Optional[str] = None,
+        routable_cidrs: Optional[Dict[str, Dict[str, bool]]] = None,
+        firewall_rules: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
         """Create a new route.
 
         Token scope required: ``routes:create``.
 
         Args:
-            name: Name of the route.
+            name: Name of the route (1-50 chars).
+            description: Optional description (max 255 chars).
+            router_host_id: Optional router host ID.
+            routable_cidrs: Optional dict mapping IPv4 CIDR ranges to install flags.
+            firewall_rules: Optional list of firewall rule objects.
 
         Returns:
             Created route data as a dictionary.
         """
         body: Dict[str, Any] = {"name": name}
+        if description is not None:
+            body["description"] = description
+        if router_host_id is not None:
+            body["routerHostID"] = router_host_id
+        if routable_cidrs is not None:
+            body["routableCIDRs"] = routable_cidrs
+        if firewall_rules is not None:
+            body["firewallRules"] = firewall_rules
+
         response: Dict[str, Any] = self.client.post("/v1/routes", json=body)
         return response.get("data", {})
 
@@ -506,24 +526,36 @@ class Tags(BaseResource):
         name: str,
         description: Optional[str] = None,
         config_overrides: Optional[List[Dict[str, Any]]] = None,
+        before: Optional[str] = None,
+        after: Optional[str] = None,
+        route_subscriptions: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """Create a new tag.
 
         Token scope required: ``tags:create``.
 
         Args:
-            name: Tag name in ``key:value`` format.
-            description: Optional description.
+            name: Tag name in ``key:value`` format (max 20 chars for key, 50 for value).
+            description: Optional description (max 255 chars).
             config_overrides: Optional config overrides.
+            before: Optional tag name to insert before (lower priority).
+            after: Optional tag name to insert after (higher priority).
+            route_subscriptions: Optional list of route IDs to subscribe to.
 
         Returns:
             Created tag data as a dictionary.
         """
         body: Dict[str, Any] = {"name": name}
-        if description:
+        if description is not None:
             body["description"] = description
-        if config_overrides:
+        if config_overrides is not None:
             body["configOverrides"] = config_overrides
+        if before is not None:
+            body["before"] = before
+        if after is not None:
+            body["after"] = after
+        if route_subscriptions is not None:
+            body["routeSubscriptions"] = route_subscriptions
 
         response: Dict[str, Any] = self.client.post("/v1/tags", json=body)
         return response.get("data", {})
@@ -570,6 +602,7 @@ class Tags(BaseResource):
         config_overrides: Optional[List[Dict[str, Any]]] = None,
         before: Optional[str] = None,
         after: Optional[str] = None,
+        route_subscriptions: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """Edit a tag.
 
@@ -577,10 +610,11 @@ class Tags(BaseResource):
 
         Args:
             tag: Tag name in format 'key:value'.
-            description: Optional description.
+            description: Optional description (max 255 chars).
             config_overrides: Optional config overrides.
-            before: Optional tag to order before.
-            after: Optional tag to order after.
+            before: Optional tag to move before (lower priority).
+            after: Optional tag to move after (higher priority).
+            route_subscriptions: Optional list of route IDs to subscribe to.
 
         Returns:
             Updated tag data as a dictionary.
@@ -590,10 +624,12 @@ class Tags(BaseResource):
             body["description"] = description
         if config_overrides is not None:
             body["configOverrides"] = config_overrides
-        if before:
+        if before is not None:
             body["before"] = before
-        if after:
+        if after is not None:
             body["after"] = after
+        if route_subscriptions is not None:
+            body["routeSubscriptions"] = route_subscriptions
 
         response: Dict[str, Any] = self.client.put(f"/v1/tags/{tag}", json=body)
         return response.get("data", {})
