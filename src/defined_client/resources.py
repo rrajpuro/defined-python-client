@@ -305,18 +305,29 @@ class Hosts(BaseResource):
 class Roles(BaseResource):
     """Role management endpoints"""
 
-    def create(self, name: str) -> Dict[str, Any]:
+    def create(
+        self,
+        name: str,
+        description: Optional[str] = None,
+        firewall_rules: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
         """Create a new role.
 
         Token scope required: ``roles:create``.
 
         Args:
             name: Name of the role.
+            description: Optional description.
+            firewall_rules: Optional list of firewall rules.
 
         Returns:
             Created role data as a dictionary.
         """
         body: Dict[str, Any] = {"name": name}
+        if description is not None:
+            body["description"] = description
+        if firewall_rules is not None:
+            body["firewallRules"] = firewall_rules
         response: Dict[str, Any] = self.client.post("/v1/roles", json=body)
         return response.get("data", {})
 
@@ -356,7 +367,10 @@ class Roles(BaseResource):
         return response.get("data", {})
 
     def update(
-        self, role_id: str, name: Optional[str] = None, description: Optional[str] = None
+        self,
+        role_id: str,
+        description: Optional[str] = None,
+        firewall_rules: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         """Edit a role.
 
@@ -366,10 +380,10 @@ class Roles(BaseResource):
             Updated role data as a dictionary.
         """
         body: Dict[str, Any] = {}
-        if name is not None:
-            body["name"] = name
         if description is not None:
             body["description"] = description
+        if firewall_rules is not None:
+            body["firewallRules"] = firewall_rules
 
         response: Dict[str, Any] = self.client.put(f"/v1/roles/{role_id}", json=body)
         return response.get("data", {})
@@ -774,4 +788,4 @@ class Downloads(BaseResource):
             Download links and metadata as a dictionary.
         """
         response: Dict[str, Any] = self.client.get("/v1/downloads")
-        return response.get("data", {})
+        return response
