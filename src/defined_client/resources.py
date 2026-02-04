@@ -666,7 +666,13 @@ class Tags(BaseResource):
 class Networks(BaseResource):
     """Network management endpoints"""
 
-    def create(self, name: str, cidr: str) -> Dict[str, Any]:
+    def create(
+        self,
+        name: str,
+        cidr: str,
+        description: Optional[str] = None,
+        lighthouses_as_relays: Optional[bool] = None,
+    ) -> Dict[str, Any]:
         """Create a new network.
 
         Token scope required: ``networks:create``.
@@ -674,11 +680,17 @@ class Networks(BaseResource):
         Args:
             name: Network name.
             cidr: Network CIDR in format like '100.100.0.0/24'.
+            description: Optional network description.
+            lighthouses_as_relays: Whether lighthouses act as relays.
 
         Returns:
             Created network data as a dictionary.
         """
         body: Dict[str, Any] = {"name": name, "cidr": cidr}
+        if description is not None:
+            body["description"] = description
+        if lighthouses_as_relays is not None:
+            body["lighthousesAsRelays"] = lighthouses_as_relays
         response: Dict[str, Any] = self.client.post("/v1/networks", json=body)
         return response.get("data", {})
 
@@ -718,7 +730,12 @@ class Networks(BaseResource):
         return response.get("data", {})
 
     def update(
-        self, network_id: str, name: Optional[str] = None, cidr: Optional[str] = None
+        self,
+        network_id: str,
+        name: str,
+        cidr: str,
+        description: Optional[str] = None,
+        lighthouses_as_relays: Optional[bool] = None,
     ) -> Dict[str, Any]:
         """Edit a network.
 
@@ -726,17 +743,19 @@ class Networks(BaseResource):
 
         Args:
             network_id: Network ID.
-            name: Optional new network name.
-            cidr: Optional new network CIDR.
+            name: New network name.
+            cidr: New network CIDR.
+            description: Optional new network description.
+            lighthouses_as_relays: Whether lighthouses act as relays.
 
         Returns:
             Updated network data as a dictionary.
         """
-        body: Dict[str, Any] = {}
-        if name is not None:
-            body["name"] = name
-        if cidr is not None:
-            body["cidr"] = cidr
+        body: Dict[str, Any] = {"name": name, "cidr": cidr}
+        if description is not None:
+            body["description"] = description
+        if lighthouses_as_relays is not None:
+            body["lighthousesAsRelays"] = lighthouses_as_relays
 
         response: Dict[str, Any] = self.client.put(f"/v1/networks/{network_id}", json=body)
         return response.get("data", {})
