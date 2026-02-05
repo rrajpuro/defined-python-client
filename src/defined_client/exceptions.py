@@ -51,19 +51,36 @@ class DefinedClientError(Exception):
 # -------------------------
 
 class ValidationError(DefinedClientError):
-    """Request validation failed (HTTP 400)."""
+    """Request validation failed (HTTP 400).
+    
+    Raised when the API request contains invalid parameters or data that
+    fails validation rules. The ``errors`` attribute contains detailed
+    information about which fields failed validation.
+    """
 
 
 class AuthenticationError(DefinedClientError):
-    """Authentication failed or token is invalid (HTTP 401)."""
+    """Authentication failed or token is invalid (HTTP 401).
+    
+    Raised when the API key is missing, invalid, or expired. Verify that
+    your API key is correct and has not been revoked.
+    """
 
 
 class PermissionDeniedError(DefinedClientError):
-    """Authenticated but not authorized (HTTP 403)."""
+    """Authenticated but not authorized (HTTP 403).
+    
+    Raised when the API key is valid but lacks the necessary token scopes
+    to perform the requested operation.
+    """
 
 
 class NotFoundError(DefinedClientError):
-    """Requested resource was not found (HTTP 404)."""
+    """Requested resource was not found (HTTP 404).
+    
+    Raised when attempting to access a resource (host, role, network, etc.)
+    that does not exist or has been deleted.
+    """
 
 
 # -------------------------
