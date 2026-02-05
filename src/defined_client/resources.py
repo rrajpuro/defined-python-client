@@ -203,10 +203,10 @@ class Hosts(BaseResource):
             host_id: The host identifier.
 
         Returns:
-            API response data.
+            The blocked host data as a dictionary (or empty dict if not provided).
         """
         response: Dict[str, Any] = self.client.post(f"/v1/hosts/{host_id}/block")
-        return response.get("data", {})
+        return response.get("data", {}).get("host", {})
 
     def unblock(self, host_id: str) -> Dict[str, Any]:
         """Unblock a host.
@@ -217,10 +217,10 @@ class Hosts(BaseResource):
             host_id: The host identifier.
 
         Returns:
-            API response data.
+            The unblocked host data as a dictionary (or empty dict if not provided).
         """
         response: Dict[str, Any] = self.client.post(f"/v1/hosts/{host_id}/unblock")
-        return response.get("data", {})
+        return response.get("data", {}).get("host", {})
 
     def debug_command(
         self, host_id: str, command_type: str, **kwargs
@@ -375,6 +375,15 @@ class Roles(BaseResource):
         """Edit a role.
 
         Token scope required: ``roles:update``.
+
+        **Caution:** Any properties not provided in the request will be reset to
+        their default values. If only changing one firewall rule, be sure to include
+        the others as well, otherwise they will be removed.
+
+        Args:
+            role_id: The role identifier.
+            description: Optional description (max 255 chars).
+            firewall_rules: Optional list of firewall rules (replaces existing list).
 
         Returns:
             Updated role data as a dictionary.
@@ -622,12 +631,17 @@ class Tags(BaseResource):
 
         Token scope required: ``tags:update``.
 
+        **Caution:** Any properties not provided in the request will be reset to
+        their default values. Be sure to include all current values you don't want
+        to change, including ``configOverrides``. Unless ``before`` or ``after`` are
+        specified, the priority will not change.
+
         Args:
             tag: Tag name in format 'key:value'.
             description: Optional description (max 255 chars).
             config_overrides: Optional config overrides.
-            before: Optional tag to move before (lower priority).
-            after: Optional tag to move after (higher priority).
+            before: Optional tag to move before (lower priority). Cannot be used with ``after``.
+            after: Optional tag to move after (higher priority). Cannot be used with ``before``.
             route_subscriptions: Optional list of route IDs to subscribe to.
 
         Returns:
@@ -733,7 +747,6 @@ class Networks(BaseResource):
         self,
         network_id: str,
         name: str,
-        cidr: str,
         description: Optional[str] = None,
         lighthouses_as_relays: Optional[bool] = None,
     ) -> Dict[str, Any]:
@@ -741,17 +754,19 @@ class Networks(BaseResource):
 
         Token scope required: ``networks:update``.
 
+        **Caution:** Any properties not provided in the request will be reset to
+        their default values.
+
         Args:
             network_id: Network ID.
-            name: New network name.
-            cidr: New network CIDR.
-            description: Optional new network description.
+            name: Network name (required).
+            description: Optional network description.
             lighthouses_as_relays: Whether lighthouses act as relays.
 
         Returns:
             Updated network data as a dictionary.
         """
-        body: Dict[str, Any] = {"name": name, "cidr": cidr}
+        body: Dict[str, Any] = {"name": name}
         if description is not None:
             body["description"] = description
         if lighthouses_as_relays is not None:
