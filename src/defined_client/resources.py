@@ -59,7 +59,7 @@ class Hosts(BaseResource):
             config_overrides: Optional config overrides for the host.
 
         Returns:
-            The created host data as a dictionary (or empty dict if not provided).
+            API response containing the created host data.
         """
         body: Dict[str, Any] = {
             "name": name,
@@ -81,7 +81,7 @@ class Hosts(BaseResource):
             body["configOverrides"] = config_overrides
 
         response: Dict[str, Any] = self.client.post("/v1/hosts", json=body)
-        return response.get("data", {})
+        return response
 
     def list(
         self,
@@ -102,7 +102,7 @@ class Hosts(BaseResource):
         Token scope required: ``hosts:list``.
 
         Returns:
-            Raw API response containing pagination metadata and host list.
+            API response containing pagination metadata and host list.
         """
         params = self._build_params(
             includeCounts=include_counts,
@@ -131,10 +131,10 @@ class Hosts(BaseResource):
             host_id: The host identifier.
 
         Returns:
-            Host data as a dictionary (or empty dict if not provided).
+            API response containing the host data.
         """
         response: Dict[str, Any] = self.client.get(f"/v1/hosts/{host_id}")
-        return response.get("data", {})
+        return response
 
     def delete(self, host_id: str) -> Dict[str, Any]:
         """Delete a host.
@@ -145,10 +145,10 @@ class Hosts(BaseResource):
             host_id: The host identifier.
 
         Returns:
-            API response data (often empty dict).
+            API response.
         """
         response: Dict[str, Any] = self.client.delete(f"/v1/hosts/{host_id}")
-        return response.get("data", {})
+        return response
 
     def update(
         self,
@@ -174,7 +174,7 @@ class Hosts(BaseResource):
             config_overrides: Optional config overrides.
 
         Returns:
-            Updated host data as a dictionary (or empty dict if not provided).
+            API response containing the updated host data.
         """
         body: Dict[str, Any] = {}
 
@@ -192,7 +192,7 @@ class Hosts(BaseResource):
             body["configOverrides"] = config_overrides
 
         response: Dict[str, Any] = self.client.put(f"/v2/hosts/{host_id}", json=body)
-        return response.get("data", {})
+        return response
 
     def block(self, host_id: str) -> Dict[str, Any]:
         """Block a host.
@@ -203,10 +203,10 @@ class Hosts(BaseResource):
             host_id: The host identifier.
 
         Returns:
-            The blocked host data as a dictionary (or empty dict if not provided).
+            API response containing the blocked host data.
         """
         response: Dict[str, Any] = self.client.post(f"/v1/hosts/{host_id}/block")
-        return response.get("data", {}).get("host", {})
+        return response
 
     def unblock(self, host_id: str) -> Dict[str, Any]:
         """Unblock a host.
@@ -217,10 +217,10 @@ class Hosts(BaseResource):
             host_id: The host identifier.
 
         Returns:
-            The unblocked host data as a dictionary (or empty dict if not provided).
+            API response containing the unblocked host data.
         """
         response: Dict[str, Any] = self.client.post(f"/v1/hosts/{host_id}/unblock")
-        return response.get("data", {}).get("host", {})
+        return response
 
     def debug_command(
         self, host_id: str, command_type: str, **kwargs
@@ -235,7 +235,7 @@ class Hosts(BaseResource):
             **kwargs: Command-specific arguments passed under the ``args`` key.
 
         Returns:
-            Command response data.
+            API response containing the command result.
         """
         body: Dict[str, Any] = {"command": command_type}
 
@@ -243,7 +243,7 @@ class Hosts(BaseResource):
             body["args"] = kwargs
 
         response: Dict[str, Any] = self.client.post(f"/v1/hosts/{host_id}/command", json=body)
-        return response.get("data", {})
+        return response
 
     def create_enrollment_code(self, host_id: str) -> Dict[str, Any]:
         """Create an enrollment code for a host.
@@ -254,10 +254,10 @@ class Hosts(BaseResource):
             host_id: The host identifier.
 
         Returns:
-            Enrollment code data.
+            API response containing the enrollment code data.
         """
         response: Dict[str, Any] = self.client.post(f"/v1/hosts/{host_id}/enrollment-code")
-        return response.get("data", {})
+        return response
 
     def create_with_enrollment(
         self,
@@ -277,7 +277,7 @@ class Hosts(BaseResource):
         Token scopes required: ``hosts:create``, ``hosts:enroll``.
 
         Returns:
-            Created host and enrollment code data.
+            API response containing the created host and enrollment code data.
         """
         body: Dict[str, Any] = {
             "name": name,
@@ -299,7 +299,7 @@ class Hosts(BaseResource):
             body["configOverrides"] = config_overrides
 
         response: Dict[str, Any] = self.client.post("/v1/host-and-enrollment-code", json=body)
-        return response.get("data", {})
+        return response
 
 
 class Roles(BaseResource):
@@ -321,7 +321,7 @@ class Roles(BaseResource):
             firewall_rules: Optional list of firewall rules.
 
         Returns:
-            Created role data as a dictionary.
+            API response containing the created role data.
         """
         body: Dict[str, Any] = {"name": name}
         if description is not None:
@@ -329,7 +329,7 @@ class Roles(BaseResource):
         if firewall_rules is not None:
             body["firewallRules"] = firewall_rules
         response: Dict[str, Any] = self.client.post("/v1/roles", json=body)
-        return response.get("data", {})
+        return response
 
     def list(
         self,
@@ -342,7 +342,7 @@ class Roles(BaseResource):
         Token scope required: ``roles:list``.
 
         Returns:
-            Raw API response containing list and pagination metadata.
+            API response containing list and pagination metadata.
         """
         params = self._build_params(
             includeCounts=include_counts,
@@ -361,10 +361,10 @@ class Roles(BaseResource):
             role_id: The role identifier.
 
         Returns:
-            Role data as a dictionary (or empty dict if not provided).
+            API response containing the role data.
         """
         response: Dict[str, Any] = self.client.get(f"/v1/roles/{role_id}")
-        return response.get("data", {})
+        return response
 
     def update(
         self,
@@ -386,7 +386,7 @@ class Roles(BaseResource):
             firewall_rules: Optional list of firewall rules (replaces existing list).
 
         Returns:
-            Updated role data as a dictionary.
+            API response containing the updated role data.
         """
         body: Dict[str, Any] = {}
         if description is not None:
@@ -395,7 +395,7 @@ class Roles(BaseResource):
             body["firewallRules"] = firewall_rules
 
         response: Dict[str, Any] = self.client.put(f"/v1/roles/{role_id}", json=body)
-        return response.get("data", {})
+        return response
 
     def delete(self, role_id: str) -> Dict[str, Any]:
         """Delete a role.
@@ -406,10 +406,10 @@ class Roles(BaseResource):
             role_id: The role identifier.
 
         Returns:
-            API response data.
+            API response.
         """
         response: Dict[str, Any] = self.client.delete(f"/v1/roles/{role_id}")
-        return response.get("data", {})
+        return response
 
 
 class Routes(BaseResource):
@@ -435,7 +435,7 @@ class Routes(BaseResource):
             firewall_rules: Optional list of firewall rule objects.
 
         Returns:
-            Created route data as a dictionary.
+            API response containing the created route data.
         """
         body: Dict[str, Any] = {"name": name}
         if description is not None:
@@ -448,7 +448,7 @@ class Routes(BaseResource):
             body["firewallRules"] = firewall_rules
 
         response: Dict[str, Any] = self.client.post("/v1/routes", json=body)
-        return response.get("data", {})
+        return response
 
     def list(
         self,
@@ -461,7 +461,7 @@ class Routes(BaseResource):
         Token scope required: ``routes:list``.
 
         Returns:
-            Raw API response containing the list and pagination metadata.
+            API response containing the list and pagination metadata.
         """
         params = self._build_params(
             includeCounts=include_counts,
@@ -480,10 +480,10 @@ class Routes(BaseResource):
             route_id: The route identifier.
 
         Returns:
-            Route data as a dictionary (or empty dict if not provided).
+            API response containing the route data.
         """
         response: Dict[str, Any] = self.client.get(f"/v1/routes/{route_id}")
-        return response.get("data", {})
+        return response
 
     def update(
         self,
@@ -511,7 +511,7 @@ class Routes(BaseResource):
             firewall_rules: Optional list of firewall rule objects.
 
         Returns:
-            Updated route data as a dictionary.
+            API response containing the updated route data.
         """
         body: Dict[str, Any] = {"name": name}
         if description is not None:
@@ -524,7 +524,7 @@ class Routes(BaseResource):
             body["firewallRules"] = firewall_rules
 
         response: Dict[str, Any] = self.client.put(f"/v1/routes/{route_id}", json=body)
-        return response.get("data", {})
+        return response
 
     def delete(self, route_id: str) -> Dict[str, Any]:
         """Delete a route.
@@ -535,10 +535,10 @@ class Routes(BaseResource):
             route_id: The route identifier.
 
         Returns:
-            API response data.
+            API response.
         """
         response: Dict[str, Any] = self.client.delete(f"/v1/routes/{route_id}")
-        return response.get("data", {})
+        return response
 
 
 class Tags(BaseResource):
@@ -566,7 +566,7 @@ class Tags(BaseResource):
             route_subscriptions: Optional list of route IDs to subscribe to.
 
         Returns:
-            Created tag data as a dictionary.
+            API response containing the created tag data.
         """
         body: Dict[str, Any] = {"name": name}
         if description is not None:
@@ -581,7 +581,7 @@ class Tags(BaseResource):
             body["routeSubscriptions"] = route_subscriptions
 
         response: Dict[str, Any] = self.client.post("/v1/tags", json=body)
-        return response.get("data", {})
+        return response
 
     def list(
         self,
@@ -594,7 +594,7 @@ class Tags(BaseResource):
         Token scope required: ``tags:list``.
 
         Returns:
-            Raw API response containing tag list and pagination metadata.
+            API response containing tag list and pagination metadata.
         """
         params = self._build_params(
             includeCounts=include_counts,
@@ -613,10 +613,10 @@ class Tags(BaseResource):
             tag: Tag name in format 'key:value'.
 
         Returns:
-            Tag data as a dictionary (or empty dict if not provided).
+            API response containing the tag data.
         """
         response: Dict[str, Any] = self.client.get(f"/v1/tags/{tag}")
-        return response.get("data", {})
+        return response
 
     def update(
         self,
@@ -645,7 +645,7 @@ class Tags(BaseResource):
             route_subscriptions: Optional list of route IDs to subscribe to.
 
         Returns:
-            Updated tag data as a dictionary.
+            API response containing the updated tag data.
         """
         body: Dict[str, Any] = {}
         if description is not None:
@@ -660,7 +660,7 @@ class Tags(BaseResource):
             body["routeSubscriptions"] = route_subscriptions
 
         response: Dict[str, Any] = self.client.put(f"/v1/tags/{tag}", json=body)
-        return response.get("data", {})
+        return response
 
     def delete(self, tag: str) -> Dict[str, Any]:
         """Delete a tag.
@@ -671,10 +671,10 @@ class Tags(BaseResource):
             tag: Tag name in format 'key:value'.
 
         Returns:
-            API response data.
+            API response.
         """
         response: Dict[str, Any] = self.client.delete(f"/v1/tags/{tag}")
-        return response.get("data", {})
+        return response
 
 
 class Networks(BaseResource):
@@ -698,7 +698,7 @@ class Networks(BaseResource):
             lighthouses_as_relays: Whether lighthouses act as relays.
 
         Returns:
-            Created network data as a dictionary.
+            API response containing the created network data.
         """
         body: Dict[str, Any] = {"name": name, "cidr": cidr}
         if description is not None:
@@ -706,7 +706,7 @@ class Networks(BaseResource):
         if lighthouses_as_relays is not None:
             body["lighthousesAsRelays"] = lighthouses_as_relays
         response: Dict[str, Any] = self.client.post("/v1/networks", json=body)
-        return response.get("data", {})
+        return response
 
     def list(
         self,
@@ -719,7 +719,7 @@ class Networks(BaseResource):
         Token scope required: ``networks:list``.
 
         Returns:
-            Raw API response containing networks and pagination metadata.
+            API response containing networks and pagination metadata.
         """
         params = self._build_params(
             includeCounts=include_counts,
@@ -738,10 +738,10 @@ class Networks(BaseResource):
             network_id: The network identifier.
 
         Returns:
-            Network data as a dictionary (or empty dict if not provided).
+            API response containing the network data.
         """
         response: Dict[str, Any] = self.client.get(f"/v1/networks/{network_id}")
-        return response.get("data", {})
+        return response
 
     def update(
         self,
@@ -764,7 +764,7 @@ class Networks(BaseResource):
             lighthouses_as_relays: Whether lighthouses act as relays.
 
         Returns:
-            Updated network data as a dictionary.
+            API response containing the updated network data.
         """
         body: Dict[str, Any] = {"name": name}
         if description is not None:
@@ -773,7 +773,7 @@ class Networks(BaseResource):
             body["lighthousesAsRelays"] = lighthouses_as_relays
 
         response: Dict[str, Any] = self.client.put(f"/v1/networks/{network_id}", json=body)
-        return response.get("data", {})
+        return response
 
 
 class AuditLogs(BaseResource):
@@ -795,7 +795,7 @@ class AuditLogs(BaseResource):
             filter_target_type: One of: apiKey, host, network, role, user, ca, oidcProvider.
 
         Returns:
-            Raw API response containing audit log entries and pagination metadata.
+            API response containing audit log entries and pagination metadata.
         """
         params = self._build_params(
             includeCounts=include_counts,
