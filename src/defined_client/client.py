@@ -24,14 +24,14 @@ from .resources import (
 
 class DefinedClient:
     """Main client for interacting with Defined Networking API.
-    
+
     This client provides access to all Defined Networking API endpoints through
     intuitive resource interfaces. Each resource (hosts, roles, networks, etc.)
     has its own set of methods for create, read, update, delete, and list operations.
-    
+
     The client handles authentication, error handling, and request/response
     serialization automatically.
-    
+
     Attributes:
         hosts: Host, lighthouse, and relay management
         roles: Role and firewall rule management
@@ -40,25 +40,25 @@ class DefinedClient:
         networks: Network management
         audit_logs: Audit log retrieval
         downloads: Software download links (unauthenticated)
-    
+
     Example:
         >>> client = DefinedClient(api_key="dnkey-...")
-        >>> 
+        >>>
         >>> # List all hosts
         >>> response = client.hosts.list()
         >>> hosts = response["data"]
-        >>> 
+        >>>
         >>> # Create a new host
         >>> host = client.hosts.create(
         ...     name="my-host",
         ...     network_id="network-...",
         ...     role_id="role-..."
         ... )
-        >>> 
+        >>>
         >>> # Use as context manager (automatically closes session)
         >>> with DefinedClient(api_key="dnkey-...") as client:
         ...     networks = client.networks.list()
-    
+
     For full API documentation, see: https://docs.defined.net/
     """
 
@@ -83,10 +83,10 @@ class DefinedClient:
         self.api_key: str = api_key
         self.base_url: str = base_url or self.BASE_URL
         self.session: requests.Session = requests.Session()
-        
+
         # Import version here to avoid circular imports
         from . import __version__
-        
+
         self.session.headers.update(
             {
                 "Authorization": f"Bearer {api_key}",
@@ -135,6 +135,11 @@ class DefinedClient:
             DefinedClientError: For other API errors
         """
         url = f"{self.base_url.rstrip('/')}/{endpoint.lstrip('/')}"
+
+        # Convert json=None to {} for POST/PUT/PATCH to ensure valid JSON body
+        # is sent with Content-Type: application/json header
+        if method in ("POST", "PUT", "PATCH") and json is None:
+            json = {}
 
         try:
             response = self.session.request(
