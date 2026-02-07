@@ -4,6 +4,8 @@ A comprehensive Python client for interacting with the [Defined Networking API](
 
 ## Quick Start
 
+### Basic Usage
+
 ```python
 from defined_client import DefinedClient
 
@@ -31,16 +33,61 @@ client.hosts.update("host-XXXXX", name="Updated Name")
 client.hosts.delete("host-XXXXX")
 ```
 
-## Context Manager Usage (Recommended)
+### Running Directly with `uv`
+
+You can run Python scripts directly from the GitHub repository using `uv` without installing the package:
+
+```bash
+uv run --script your_script.py
+```
+
+In your Python script, create a file with the following header to specify dependencies:
+
+```python
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "defined-client",
+# ]
+#
+# [tool.uv.sources]
+# defined-client = { git = "https://github.com/rrajpuro/defined-python-client" }
+# ///
+
+from defined_client import DefinedClient
+
+api_key = "your-api-key-from-admin.defined.net"
+with DefinedClient(api_key) as client:
+    hosts = client.hosts.list()
+    print(hosts)
+```
+
+Then run:
+```bash
+uv run --script your_script.py
+```
+
+### Adding to Existing Scripts
+
+To add the `defined-client` dependency to any existing script, use:
+
+```bash
+uv add --script your_script.py git+https://github.com/rrajpuro/defined-python-client
+```
+
+This will automatically update your script's dependency block with the GitHub repository source.
+
+### Context Manager Usage (Recommended)
 
 Use the context manager to automatically close the session:
 
 ```python
 from defined_client import DefinedClient
 
+api_key = "your-api-key-from-admin.defined.net"
 with DefinedClient(api_key) as client:
     hosts = client.hosts.list()
-    new_host = client.hosts.create(name="My Host", network_id="...")
+    new_host = client.hosts.create(name="My Host", network_id="network-XXXXX")
 ```
 
 ## Features
@@ -117,11 +164,9 @@ except DefinedClientError as e:
     print("API error:", e.message)
 ```
 
-Notes:
-- List endpoints (e.g. ``client.hosts.list()``) return the raw API response which includes
-    pagination metadata under ``metadata`` as well as the list under ``data``.
-- Many individual resource methods return the value of the API ``data`` key; if the server
-    returned no ``data`` key (or a 204 No Content), the client will return an empty dictionary.
+**Notes:**
+- List endpoints (e.g., `client.hosts.list()`) return the raw API response which includes pagination metadata under `metadata` as well as the list under `data`.
+- Many individual resource methods return the value of the API `data` key; if the server returned no `data` key (or a 204 No Content), the client will return an empty dictionary.
 
 ## Pagination
 
@@ -131,8 +176,9 @@ List endpoints support pagination:
 # Get first page with 10 results
 response = client.hosts.list(page_size=10, include_counts=True)
 
-# Get specific page using cursor
-response = client.hosts.list(cursor=response['metadata']['nextCursor'])
+# Get next page using cursor
+if response['metadata'].get('nextCursor'):
+    response = client.hosts.list(cursor=response['metadata']['nextCursor'])
 ```
 
 ## Filtering
