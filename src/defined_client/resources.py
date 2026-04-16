@@ -164,6 +164,10 @@ class Hosts(BaseResource):
 
         Token scope required: ``hosts:update``.
 
+        **Caution:** Any properties not provided in the request will be reset to
+        their default values. Be sure to include all current values you don't want
+        to change, including ``tags`` and ``configOverrides``.
+
         Args:
             host_id: ID of the host to update.
             name: Optional new name.

@@ -17,6 +17,10 @@ from defined_client import (
     NotFoundError,
     PermissionDeniedError,
     ServerError,
+    HostService,
+    RouteService,
+    TagService,
+    list_all,
 )
 
 # Replace with your actual API key from https://admin.defined.net/settings/api-keys
@@ -99,7 +103,8 @@ with DefinedClient(api_key) as client:
     print("Host and enrollment code:", host_with_code)
     print("Enrollment code:", host_with_code.get("enrollmentCode", {}).get("code"))
 
-    # Update a host
+    # Update a host (low-level — omitted fields are reset to defaults!)
+    # Prefer HostService.safe_update() instead (see Services section below)
     updated_host = client.hosts.update(
         host_id="host-24NVITKMNU3CYCEDNFWKAOBX7I",
         name="app-server-01-updated",
@@ -189,7 +194,7 @@ with DefinedClient(api_key) as client:
     role = client.roles.get("role-LO4SPDSWTZNJC676WFCZKUB3ZQ")
     print("Role details:", role)
 
-    # Update a role (include all firewall rules or they'll be removed)
+    # Update a role (low-level — include all firewall rules or they'll be removed)
     updated_role = client.roles.update(
         role_id="role-LO4SPDSWTZNJC676WFCZKUB3ZQ",
         description="Updated administrator role",
@@ -240,7 +245,8 @@ with DefinedClient(api_key) as client:
     tag = client.tags.get("env:prod")
     print("Tag details:", tag)
 
-    # Update a tag (include all config overrides or they'll be reset)
+    # Update a tag (low-level — include all config overrides or they'll be reset)
+    # Prefer TagService.safe_update() instead (see Services section below)
     updated_tag = client.tags.update(
         tag="env:prod",
         description="Updated production environment",
@@ -279,7 +285,8 @@ with DefinedClient(api_key) as client:
     route = client.routes.get("route-X47KHSCOSQJP5IOKNNKRRGHVAI")
     print("Route details:", route)
 
-    # Update a route (name is required)
+    # Update a route (low-level — name is required, omitted fields reset)
+    # Prefer RouteService.safe_update() instead (see Services section below)
     updated_route = client.routes.update(
         route_id="route-X47KHSCOSQJP5IOKNNKRRGHVAI",
         name="Updated Corporate Network",
@@ -382,6 +389,46 @@ with DefinedClient(api_key) as client:
     # Version info
     version_info = data.get("versionInfo", {})
     print("Latest versions:", version_info.get("latest", {}))
+
+
+# ==================
+# Service Layer (High-Level Convenience)
+# ==================
+
+# Services compose low-level API calls into safe, convenient operations.
+# They handle GET-merge-PUT for updates and name-based lookups.
+
+with DefinedClient(api_key) as client:
+    hosts = HostService(client)
+    routes = RouteService(client)
+    tags = TagService(client)
+
+    # --- Name-based lookups (API only supports lookup by ID) ---
+    maybe_host = hosts.find_by_name("app-server-01")   # returns None if not found
+    host = hosts.get_by_name("app-server-01")           # raises NotFoundError if not found
+    route = routes.get_by_name("Corporate Network")
+
+    # --- Safe updates (only changes what you pass, preserves everything else) ---
+    hosts.safe_update(host["id"], name="app-server-02")
+    routes.safe_update(route["id"], router_host_id="host-NEWID")
+
+    # --- Tag helpers ---
+    hosts.add_tag(host["id"], "env:prod")
+    hosts.remove_tag(host["id"], "env:staging")
+    hosts.update_tags(host["id"], ["env:prod", "region:us-east-1"])
+
+    # --- Route subscription helpers ---
+    tags.subscribe_route("lab:prod", route["id"])     # idempotent
+    tags.unsubscribe_route("lab:prod", route["id"])
+
+    # --- Find tags by key prefix ---
+    lab_tags = tags.find_by_key("lab")
+    print("Lab tags:", [t["name"] for t in lab_tags])
+
+    # --- Auto-pagination ---
+    all_hosts = list_all(client.hosts.list)
+    all_routes = list_all(client.routes.list)
+    print(f"Total hosts: {len(all_hosts)}, Total routes: {len(all_routes)}")
 
 
 # ==================
