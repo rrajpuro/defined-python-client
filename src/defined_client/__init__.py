@@ -23,6 +23,7 @@ from .exceptions import (
     PermissionDeniedError,
     ServerError,
 )
+from .services import HostService, RouteService, TagService, list_all
 
 try:
     __version__ = version("defined-client")
@@ -37,4 +38,8 @@ __all__ = [
     "AuthenticationError",
     "PermissionDeniedError",
     "ServerError",
+    "HostService",
+    "RouteService",
+    "TagService",
+    "list_all",
 ]
