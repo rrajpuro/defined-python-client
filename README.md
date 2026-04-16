@@ -26,9 +26,6 @@ new_host = client.hosts.create(
 # Get a specific host
 host = client.hosts.get("host-XXXXX")
 
-# Update a host
-client.hosts.update("host-XXXXX", name="Updated Name")
-
 # Delete a host
 client.hosts.delete("host-XXXXX")
 ```
@@ -92,33 +89,59 @@ with DefinedClient(api_key) as client:
 
 ## Features
 
-### Hosts Management
-- Create, list, get, update, and delete hosts
-- Create hosts with enrollment codes in a single request
-- Block and unblock hosts
-- Send debug commands (StreamLogs, CreateTunnel, PrintTunnel, PrintCert, QueryLighthouse, DebugStack)
-- Create enrollment codes
+### API Client (`client.hosts`, `client.routes`, etc.)
 
-### Roles Management
-- Create, list, get, update, and delete roles
+Thin 1:1 wrappers around every API endpoint:
 
-### Routes Management
-- Create, list, get, update, and delete routes
+- **Hosts** — create, list, get, update, delete, block/unblock, enrollment codes, debug commands
+- **Roles** — create, list, get, update, delete
+- **Routes** — create, list, get, update, delete
+- **Tags** — create, list, get, update, delete, priority positioning
+- **Networks** — create, list, get, update
+- **Audit Logs** — list with filtering by target type and ID
+- **Downloads** — get software download links (unauthenticated)
 
-### Tags Management
-- Create, list, get, update, and delete tags
-- Set tag priorities with before/after parameters
-- Configure config overrides for tags
+> **Caution:** The API uses full-replacement PUT semantics. Any properties omitted
+> from an update request are reset to their default values. Use the service layer
+> below to avoid accidental data loss.
 
-### Networks Management
-- Create, list, get, and update networks
+### Service Layer (High-Level Convenience)
 
-### Audit Logs
-- List audit logs with filtering by target type and ID
-- Support for pagination
+The service layer sits on top of the API client and handles common patterns:
 
-### Downloads
-- Get available software download links
+```python
+from defined_client import DefinedClient, HostService, RouteService, TagService, list_all
+
+with DefinedClient(api_key) as client:
+    hosts = HostService(client)
+    routes = RouteService(client)
+    tags = TagService(client)
+
+    # Find resources by name (API only supports lookup by ID)
+    host = hosts.get_by_name("web-server-01")       # raises NotFoundError if missing
+    host = hosts.find_by_name("web-server-01")       # returns None if missing
+    route = routes.get_by_name("Corporate Network")
+
+    # Safe updates — only changes what you pass, preserves everything else
+    hosts.safe_update(host["id"], name="web-server-02")
+    routes.safe_update(route["id"], router_host_id="host-NEW")
+
+    # Tag helpers
+    hosts.add_tag(host["id"], "env:prod")
+    hosts.remove_tag(host["id"], "env:staging")
+    hosts.update_tags(host["id"], ["env:prod", "region:us-east-1"])
+
+    # Route subscription helpers
+    tags.subscribe_route("lab:prod", route["id"])
+    tags.unsubscribe_route("lab:prod", route["id"])
+
+    # Find all tags with a given key
+    lab_tags = tags.find_by_key("lab")  # returns [{"name": "lab:prod", ...}, ...]
+
+    # Auto-pagination — exhaust all pages of any list endpoint
+    all_hosts = list_all(client.hosts.list)
+    all_routes = list_all(client.routes.list)
+```
 
 ## Authentication
 
@@ -170,13 +193,16 @@ except DefinedClientError as e:
 
 ## Pagination
 
-List endpoints support pagination:
+List endpoints support pagination. Use `list_all` to auto-paginate, or paginate manually:
 
 ```python
-# Get first page with 10 results
-response = client.hosts.list(page_size=10, include_counts=True)
+from defined_client import list_all
 
-# Get next page using cursor
+# Auto-paginate (recommended)
+all_hosts = list_all(client.hosts.list)
+
+# Manual pagination
+response = client.hosts.list(page_size=10, include_counts=True)
 if response['metadata'].get('nextCursor'):
     response = client.hosts.list(cursor=response['metadata']['nextCursor'])
 ```
@@ -215,7 +241,7 @@ client = DefinedClient(
 
 ## Examples
 
-See [example_usage.py](example_usage.py) for comprehensive examples of all available operations.
+See [examples/example_usage.py](examples/example_usage.py) for comprehensive examples of all available operations.
 
 ## API Documentation
 
