@@ -6,7 +6,7 @@ to handle any client-related error or catch specific subclasses such as
 :class:`ValidationError`.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class DefinedClientError(Exception):
@@ -23,8 +23,8 @@ class DefinedClientError(Exception):
         self,
         message: str,
         *,
-        status_code: Optional[int] = None,
-        errors: Optional[List[Dict[str, Any]]] = None,
+        status_code: int | None = None,
+        errors: list[dict[str, Any]] | None = None,
         response: Any = None,
     ) -> None:
         self.message = message
@@ -50,9 +50,10 @@ class DefinedClientError(Exception):
 # Client / Request errors
 # -------------------------
 
+
 class ValidationError(DefinedClientError):
     """Request validation failed (HTTP 400).
-    
+
     Raised when the API request contains invalid parameters or data that
     fails validation rules. The ``errors`` attribute contains detailed
     information about which fields failed validation.
@@ -61,7 +62,7 @@ class ValidationError(DefinedClientError):
 
 class AuthenticationError(DefinedClientError):
     """Authentication failed or token is invalid (HTTP 401).
-    
+
     Raised when the API key is missing, invalid, or expired. Verify that
     your API key is correct and has not been revoked.
     """
@@ -69,7 +70,7 @@ class AuthenticationError(DefinedClientError):
 
 class PermissionDeniedError(DefinedClientError):
     """Authenticated but not authorized (HTTP 403).
-    
+
     Raised when the API key is valid but lacks the necessary token scopes
     to perform the requested operation.
     """
@@ -77,7 +78,7 @@ class PermissionDeniedError(DefinedClientError):
 
 class NotFoundError(DefinedClientError):
     """Requested resource was not found (HTTP 404).
-    
+
     Raised when attempting to access a resource (host, role, network, etc.)
     that does not exist or has been deleted.
     """
@@ -86,6 +87,7 @@ class NotFoundError(DefinedClientError):
 # -------------------------
 # Server errors
 # -------------------------
+
 
 class ServerError(DefinedClientError):
     """Server-side error (HTTP 5xx)."""

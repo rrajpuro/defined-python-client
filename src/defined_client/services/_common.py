@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 from ..exceptions import DefinedClientError
 
 
-def resource_data(response: Any, resource: str) -> Dict[str, Any]:
+def resource_data(response: Any, resource: str) -> dict[str, Any]:
     """Return a resource payload or fail before a replacement update.
 
     Safe updates must never turn a malformed or incomplete GET envelope into an

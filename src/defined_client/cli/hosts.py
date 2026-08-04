@@ -3,16 +3,16 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, TypeVar
+from typing import Any
 
 import click
 
 from defined_client.services import HostService
 
 from .core import (
-    CLIState,
     JSON_ARRAY,
     JSON_OBJECT,
+    CLIState,
     emit,
     list_options,
     paginate,
@@ -21,15 +21,12 @@ from .core import (
 )
 
 
-F = TypeVar("F", bound=Callable[..., Any])
-
-
 @click.group()
 def hosts() -> None:
     """Create, inspect, and manage hosts."""
 
 
-def _host_create_options(function: F) -> F:
+def _host_create_options[F: Callable[..., Any]](function: F) -> F:
     decorators = [
         click.option("--name", required=True, help="Host name."),
         click.option("--network-id", required=True, help="Network identifier."),
@@ -139,7 +136,9 @@ def create_host_with_enrollment(state: CLIState, **kwargs: Any) -> None:
 @list_options
 @click.option("--filter-endpoint-oidc-user-id")
 @click.option(
-    "--filter-is-blocked/--no-filter-is-blocked", default=None, help="Filter block state."
+    "--filter-is-blocked/--no-filter-is-blocked",
+    default=None,
+    help="Filter block state.",
 )
 @click.option(
     "--filter-is-lighthouse/--no-filter-is-lighthouse",
@@ -149,9 +148,7 @@ def create_host_with_enrollment(state: CLIState, **kwargs: Any) -> None:
 @click.option(
     "--filter-is-relay/--no-filter-is-relay", default=None, help="Filter relay state."
 )
-@click.option(
-    "--filter-metadata-last-seen-at", type=click.Choice(["null"])
-)
+@click.option("--filter-metadata-last-seen-at", type=click.Choice(["null"]))
 @click.option(
     "--filter-metadata-platform",
     type=click.Choice(["mobile", "dnclient", "null"]),
@@ -218,9 +215,7 @@ def find_host_by_name(state: CLIState, name: str) -> None:
 @click.option("--listen-port", type=click.IntRange(0, 65535))
 @click.option("--tag", "tags", multiple=True)
 @click.option("--clear-tags", is_flag=True)
-@click.option(
-    "--config-overrides", type=JSON_ARRAY, metavar="JSON|file://PATH"
-)
+@click.option("--config-overrides", type=JSON_ARRAY, metavar="JSON|file://PATH")
 @click.pass_obj
 def update_host(
     state: CLIState,
@@ -266,9 +261,7 @@ def update_host(
 
 @hosts.command("replace")
 @click.option("--host-id", required=True)
-@click.option(
-    "--document", required=True, type=JSON_OBJECT, metavar="JSON|file://PATH"
-)
+@click.option("--document", required=True, type=JSON_OBJECT, metavar="JSON|file://PATH")
 @click.pass_obj
 def replace_host(state: CLIState, host_id: str, document: dict[str, Any]) -> None:
     """Replace host fields with an API-shaped JSON document."""
@@ -283,8 +276,10 @@ def delete_host(state: CLIState, host_id: str) -> None:
     emit(state, state.get_client().hosts.delete(host_id))
 
 
-def _host_action(name: str, help_text: str) -> Callable[..., Any]:
-    def decorator(function: F) -> F:
+def _host_action(
+    name: str, help_text: str
+) -> Callable[[Callable[..., Any]], click.Command]:
+    def decorator(function: Callable[..., Any]) -> click.Command:
         return hosts.command(name, help=help_text)(
             click.option("--host-id", required=True)(click.pass_obj(function))
         )
@@ -333,7 +328,9 @@ def _validate_debug_args(command: str, args: dict[str, Any]) -> None:
                 "StreamLogs requires numeric durationSeconds in --command-args"
             )
         if not 0 <= duration <= 600:
-            raise click.UsageError("StreamLogs durationSeconds must be between 0 and 600")
+            raise click.UsageError(
+                "StreamLogs durationSeconds must be between 0 and 600"
+            )
         if level not in _LOG_LEVELS:
             raise click.UsageError(
                 "StreamLogs level must be panic, fatal, error, warning, info, or debug"
@@ -344,10 +341,10 @@ def _validate_debug_args(command: str, args: dict[str, Any]) -> None:
 
 @hosts.command("debug-command")
 @click.option("--host-id", required=True)
-@click.option("--command", "command_type", type=click.Choice(_DEBUG_COMMANDS), required=True)
 @click.option(
-    "--command-args", type=JSON_OBJECT, metavar="JSON|file://PATH"
+    "--command", "command_type", type=click.Choice(_DEBUG_COMMANDS), required=True
 )
+@click.option("--command-args", type=JSON_OBJECT, metavar="JSON|file://PATH")
 @click.pass_obj
 def debug_host(
     state: CLIState,

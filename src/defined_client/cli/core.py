@@ -5,18 +5,15 @@ from __future__ import annotations
 import json
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import Any
 from urllib.parse import urlparse
 
 import click
 
 from defined_client import DefinedClient, DefinedClientError
 
-
 DEFAULT_BASE_URL = "https://api.defined.net"
 DEFAULT_TIMEOUT = 30.0
-
-T = TypeVar("T")
 
 
 class APIError(click.ClickException):
@@ -143,9 +140,7 @@ class CLIState:
             click.echo(render_table(value))
 
 
-def validate_base_url(
-    _ctx: click.Context, _param: click.Parameter, value: str
-) -> str:
+def validate_base_url(_ctx: click.Context, _param: click.Parameter, value: str) -> str:
     parsed = urlparse(value)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise click.BadParameter("must be an absolute http:// or https:// URL")
@@ -259,9 +254,7 @@ def paginate(
                 "Invalid paginated response: next cursor is missing"
             )
         if next_cursor in seen_cursors:
-            raise DefinedClientError(
-                "Invalid paginated response: repeated next cursor"
-            )
+            raise DefinedClientError("Invalid paginated response: repeated next cursor")
         seen_cursors.add(next_cursor)
         cursor = next_cursor
 
@@ -287,7 +280,7 @@ def require_changes(**changes: Any) -> None:
         raise click.UsageError(f"provide at least one change option: {options}")
 
 
-def repeated_or_clear(
+def repeated_or_clear[T](
     values: tuple[T, ...],
     clear: bool,
     *,
@@ -311,7 +304,7 @@ def validate_tag_position(before: str | None, after: str | None) -> None:
         raise click.UsageError("--before and --after are mutually exclusive")
 
 
-def list_options(function: Callable[..., T]) -> Callable[..., T]:
+def list_options[T](function: Callable[..., T]) -> Callable[..., T]:
     """Common options for all cursor-based list commands."""
     decorators = [
         click.option(
@@ -321,9 +314,7 @@ def list_options(function: Callable[..., T]) -> Callable[..., T]:
             show_default=True,
             help="Items requested per API page.",
         ),
-        click.option(
-            "--starting-token", help="Cursor from which to begin listing."
-        ),
+        click.option("--starting-token", help="Cursor from which to begin listing."),
         click.option(
             "--no-paginate",
             is_flag=True,

@@ -25,14 +25,28 @@ Run the complete suite:
 .venv/bin/pytest
 ```
 
+Run all static checks:
+
+```bash
+.venv/bin/ruff check .
+.venv/bin/ruff format --check .
+.venv/bin/pyright
+```
+
+Apply Ruff's safe automatic fixes and formatter while developing:
+
+```bash
+.venv/bin/ruff check --fix .
+.venv/bin/ruff format .
+```
+
 Run one test module while iterating:
 
 ```bash
-.venv/bin/pytest tests/test_cli_behavior.py
+.venv/bin/pytest tests/cli/test_workflows.py
 ```
 
-The test suite uses fakes and mocks for request behavior; it does not require a
-real API key.
+The test suite and static checks do not require a real API key.
 
 ## Try the local CLI
 

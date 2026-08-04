@@ -142,8 +142,8 @@ updates are not atomic and can race with another writer between the GET and PUT.
 Services also provide focused helpers:
 
 ```python
-host = hosts.get_by_name("edge-router-02")       # raises when missing
-maybe_host = hosts.find_by_name("old-router")   # returns None when missing
+host = hosts.get_by_name("edge-router-02")  # raises when missing
+maybe_host = hosts.find_by_name("old-router")  # returns None when missing
 route = routes.get_by_name("office")
 
 hosts.add_tag(host["id"], "region:us-central")

@@ -8,7 +8,7 @@ import click
 
 from defined_client.services import NetworkService
 
-from .core import CLIState, JSON_OBJECT, emit, list_options, paginate, require_changes
+from .core import JSON_OBJECT, CLIState, emit, list_options, paginate, require_changes
 
 
 @click.group()
@@ -20,9 +20,7 @@ def networks() -> None:
 @click.option("--name", required=True)
 @click.option("--cidr", required=True)
 @click.option("--description")
-@click.option(
-    "--lighthouses-as-relays/--no-lighthouses-as-relays", default=None
-)
+@click.option("--lighthouses-as-relays/--no-lighthouses-as-relays", default=None)
 @click.pass_obj
 def create_network(
     state: CLIState,
@@ -78,9 +76,7 @@ def get_network(state: CLIState, network_id: str) -> None:
 @click.option("--network-id", required=True)
 @click.option("--name")
 @click.option("--description")
-@click.option(
-    "--lighthouses-as-relays/--no-lighthouses-as-relays", default=None
-)
+@click.option("--lighthouses-as-relays/--no-lighthouses-as-relays", default=None)
 @click.pass_obj
 def update_network(
     state: CLIState,
@@ -110,8 +106,6 @@ def update_network(
 @click.option("--network-id", required=True)
 @click.option("--document", required=True, type=JSON_OBJECT, metavar="JSON|file://PATH")
 @click.pass_obj
-def replace_network(
-    state: CLIState, network_id: str, document: dict[str, Any]
-) -> None:
+def replace_network(state: CLIState, network_id: str, document: dict[str, Any]) -> None:
     """Replace network fields with an API-shaped JSON document."""
     emit(state, state.get_client().put(f"/v1/networks/{network_id}", json=document))

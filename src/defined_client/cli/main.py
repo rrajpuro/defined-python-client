@@ -9,9 +9,9 @@ import click
 from defined_client import __version__
 
 from .core import (
-    CLIState,
     DEFAULT_BASE_URL,
     DEFAULT_TIMEOUT,
+    CLIState,
     ErrorHandlingGroup,
     validate_base_url,
 )
@@ -54,12 +54,12 @@ def main(ctx: click.Context, base_url: str, timeout: float, output: str) -> None
 
 
 # Imported after ``main`` is defined so resource modules can register cleanly.
-from .hosts import hosts  # noqa: E402
-from .misc import audit_logs, downloads  # noqa: E402
-from .networks import networks  # noqa: E402
-from .roles import roles  # noqa: E402
-from .routes import routes  # noqa: E402
-from .tags import tags  # noqa: E402
+from .hosts import hosts
+from .misc import audit_logs, downloads
+from .networks import networks
+from .roles import roles
+from .routes import routes
+from .tags import tags
 
 main.add_command(hosts)
 main.add_command(roles)
