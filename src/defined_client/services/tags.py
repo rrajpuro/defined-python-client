@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
+from ._common import resource_data
 from .pagination import list_all
 
 if TYPE_CHECKING:
@@ -65,7 +66,7 @@ class TagService:
         Note: ``before`` and ``after`` are positional directives, not
         preserved state — they are only forwarded when explicitly provided.
         """
-        data = self.client.tags.get(tag).get("data", {})
+        data = resource_data(self.client.tags.get(tag), "tag")
 
         return self.client.tags.update(
             tag,
@@ -92,7 +93,7 @@ class TagService:
 
     def subscribe_route(self, tag: str, route_id: str) -> Dict[str, Any]:
         """Add a route subscription to a tag (idempotent)."""
-        data = self.client.tags.get(tag).get("data", {})
+        data = resource_data(self.client.tags.get(tag), "tag")
         current = data.get("routeSubscriptions", [])
         if route_id in current:
             return {"data": data}
@@ -100,7 +101,7 @@ class TagService:
 
     def unsubscribe_route(self, tag: str, route_id: str) -> Dict[str, Any]:
         """Remove a route subscription from a tag."""
-        data = self.client.tags.get(tag).get("data", {})
+        data = resource_data(self.client.tags.get(tag), "tag")
         current = data.get("routeSubscriptions", [])
         return self.safe_update(
             tag, route_subscriptions=[r for r in current if r != route_id]
