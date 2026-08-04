@@ -1,24 +1,26 @@
 """Main API Client for Defined Networking"""
 
+from types import TracebackType
+from typing import Any, Self
+
 import requests
-from typing import Optional, Dict, Any
 
 from .exceptions import (
-    DefinedClientError,
-    ValidationError,
     AuthenticationError,
+    DefinedClientError,
     NotFoundError,
     PermissionDeniedError,
     ServerError,
+    ValidationError,
 )
 from .resources import (
+    AuditLogs,
+    Downloads,
     Hosts,
+    Networks,
     Roles,
     Routes,
     Tags,
-    Networks,
-    AuditLogs,
-    Downloads,
 )
 
 
@@ -74,8 +76,8 @@ class DefinedClient:
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        base_url: Optional[str] = None,
+        api_key: str | None = None,
+        base_url: str | None = None,
         timeout: float = 30,
     ) -> None:
         """
@@ -87,7 +89,7 @@ class DefinedClient:
             base_url: Optional custom base URL (default: https://api.defined.net)
             timeout: Default request timeout in seconds (default: 30)
         """
-        self.api_key: Optional[str] = api_key
+        self.api_key: str | None = api_key
         self.base_url: str = base_url or self.BASE_URL
         self.timeout: float = timeout
         self.session: requests.Session = requests.Session()
@@ -113,15 +115,14 @@ class DefinedClient:
         self.audit_logs = AuditLogs(self)
         self.downloads = Downloads(self)
 
-
     def _request(
         self,
         method: str,
         endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        json: Optional[Dict[str, Any]] = None,
-        timeout: Optional[float] = None,
-    ) -> Dict[str, Any]:
+        params: dict[str, Any] | None = None,
+        json: dict[str, Any] | None = None,
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
         """
         Make an HTTP request to the API
 
@@ -162,8 +163,7 @@ class DefinedClient:
 
         return self._handle_response(response)
 
-
-    def _handle_response(self, response: requests.Response) -> Dict[str, Any]:
+    def _handle_response(self, response: requests.Response) -> dict[str, Any]:
         """Handle the API response and raise errors if needed.
 
         Parses JSON responses and maps HTTP status codes to specific
@@ -186,12 +186,12 @@ class DefinedClient:
                 return {}
             try:
                 return response.json()
-            except ValueError:
+            except ValueError as exc:
                 raise DefinedClientError(
                     "Invalid JSON response",
                     status_code=response.status_code,
                     response=response,
-                )
+                ) from exc
 
         # Parse error payload safely
         try:
@@ -241,13 +241,12 @@ class DefinedClient:
             response=response,
         )
 
-
     def get(
         self,
         endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        timeout: Optional[float] = None,
-    ) -> Dict[str, Any]:
+        params: dict[str, Any] | None = None,
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
         """Make a GET request.
 
         Args:
@@ -263,10 +262,10 @@ class DefinedClient:
     def post(
         self,
         endpoint: str,
-        json: Optional[Dict[str, Any]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        timeout: Optional[float] = None,
-    ) -> Dict[str, Any]:
+        json: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
         """Make a POST request.
 
         Args:
@@ -278,15 +277,17 @@ class DefinedClient:
         Returns:
             Parsed response as a dictionary.
         """
-        return self._request("POST", endpoint, params=params, json=json, timeout=timeout)
+        return self._request(
+            "POST", endpoint, params=params, json=json, timeout=timeout
+        )
 
     def put(
         self,
         endpoint: str,
-        json: Optional[Dict[str, Any]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        timeout: Optional[float] = None,
-    ) -> Dict[str, Any]:
+        json: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
         """Make a PUT request.
 
         Args:
@@ -303,9 +304,9 @@ class DefinedClient:
     def delete(
         self,
         endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        timeout: Optional[float] = None,
-    ) -> Dict[str, Any]:
+        params: dict[str, Any] | None = None,
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
         """Make a DELETE request.
 
         Args:
@@ -325,7 +326,7 @@ class DefinedClient:
         """
         self.session.close()
 
-    def __enter__(self) -> "DefinedClient":
+    def __enter__(self) -> Self:
         """Enter context manager and return client instance.
 
         Returns:
@@ -334,7 +335,10 @@ class DefinedClient:
         return self
 
     def __exit__(
-        self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         """Exit context manager and close the session.
 

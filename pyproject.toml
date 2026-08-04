@@ -17,9 +17,25 @@ definedcli = "defined_client.cli:main"
 
 [dependency-groups]
 dev = [
+    "pyright>=1.1.411",
     "pytest>=9,<10",
+    "ruff>=0.16.1",
 ]
 
 [build-system]
 requires = ["uv_build>=0.9.27,<0.10.0"]
 build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 88
+src = ["src"]
+
+[tool.ruff.lint]
+extend-select = ["B", "I", "UP"]
+
+[tool.pyright]
+include = ["src"]
+pythonVersion = "3.13"
+typeCheckingMode = "standard"
+venvPath = "."
+venv = ".venv"

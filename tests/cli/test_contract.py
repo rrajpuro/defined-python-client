@@ -1,4 +1,4 @@
-"""Public command-tree and local-behavior tests for ``definedcli``."""
+"""Public command-tree and local-validation tests for ``definedcli``."""
 
 from __future__ import annotations
 
@@ -8,7 +8,6 @@ import pytest
 from click.testing import CliRunner
 
 from defined_client.cli import main
-
 
 EXPECTED_COMMANDS = {
     "hosts": {
@@ -56,11 +55,6 @@ EXPECTED_COMMANDS = {
     "audit-logs": {"list"},
     "downloads": {"list"},
 }
-
-
-@pytest.fixture
-def runner() -> CliRunner:
-    return CliRunner()
 
 
 def test_complete_command_inventory() -> None:
