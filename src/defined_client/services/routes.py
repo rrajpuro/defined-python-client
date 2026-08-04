@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Dict, Optional, TYPE_CHECKING
 
 from ..exceptions import NotFoundError
+from ._common import resource_data
 from .pagination import list_all
 
 if TYPE_CHECKING:
@@ -71,7 +72,7 @@ class RouteService:
         Fetches the current route state, merges in the provided values,
         and sends the full object back to the API.
         """
-        data = self.client.routes.get(route_id).get("data", {})
+        data = resource_data(self.client.routes.get(route_id), "route")
 
         return self.client.routes.update(
             route_id,

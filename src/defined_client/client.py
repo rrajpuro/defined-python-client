@@ -72,29 +72,37 @@ class DefinedClient:
     audit_logs: "AuditLogs"
     downloads: "Downloads"
 
-    def __init__(self, api_key: str, base_url: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        timeout: float = 30,
+    ) -> None:
         """
         Initialize the Defined Networking API client
 
         Args:
-            api_key: API key from https://admin.defined.net/settings/api-keys
+            api_key: Optional API key from https://admin.defined.net/settings/api-keys.
+                Authentication is omitted when no key is provided.
             base_url: Optional custom base URL (default: https://api.defined.net)
+            timeout: Default request timeout in seconds (default: 30)
         """
-        self.api_key: str = api_key
+        self.api_key: Optional[str] = api_key
         self.base_url: str = base_url or self.BASE_URL
+        self.timeout: float = timeout
         self.session: requests.Session = requests.Session()
 
         # Import version here to avoid circular imports
         from . import __version__
 
-        self.session.headers.update(
-            {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-                "User-Agent": f"defined-client-python/{__version__}",
-            }
-        )
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": f"defined-client-python/{__version__}",
+        }
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        self.session.headers.update(headers)
 
         # Initialize resource endpoints
         self.hosts = Hosts(self)
@@ -112,7 +120,7 @@ class DefinedClient:
         endpoint: str,
         params: Optional[Dict[str, Any]] = None,
         json: Optional[Dict[str, Any]] = None,
-        timeout: int = 30,
+        timeout: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
         Make an HTTP request to the API
@@ -122,7 +130,7 @@ class DefinedClient:
             endpoint: API endpoint path (e.g., "/v1/hosts")
             params: Query parameters
             json: JSON request body
-            timeout: Request timeout in seconds
+            timeout: Request timeout in seconds. Uses the client default when omitted.
 
         Returns:
             Response data
@@ -147,7 +155,7 @@ class DefinedClient:
                 url=url,
                 params=params,
                 json=json,
-                timeout=timeout,
+                timeout=self.timeout if timeout is None else timeout,
             )
         except requests.exceptions.RequestException as exc:
             raise DefinedClientError("Network error") from exc
@@ -238,14 +246,14 @@ class DefinedClient:
         self,
         endpoint: str,
         params: Optional[Dict[str, Any]] = None,
-        timeout: int = 30,
+        timeout: Optional[float] = None,
     ) -> Dict[str, Any]:
         """Make a GET request.
 
         Args:
             endpoint: API endpoint path (e.g., "/v1/hosts").
             params: Optional query parameters.
-            timeout: Request timeout in seconds.
+            timeout: Request timeout in seconds. Uses the client default when omitted.
 
         Returns:
             Parsed response as a dictionary.
@@ -257,7 +265,7 @@ class DefinedClient:
         endpoint: str,
         json: Optional[Dict[str, Any]] = None,
         params: Optional[Dict[str, Any]] = None,
-        timeout: int = 30,
+        timeout: Optional[float] = None,
     ) -> Dict[str, Any]:
         """Make a POST request.
 
@@ -265,7 +273,7 @@ class DefinedClient:
             endpoint: API endpoint path.
             json: Optional JSON body to send.
             params: Optional query parameters.
-            timeout: Request timeout in seconds.
+            timeout: Request timeout in seconds. Uses the client default when omitted.
 
         Returns:
             Parsed response as a dictionary.
@@ -277,7 +285,7 @@ class DefinedClient:
         endpoint: str,
         json: Optional[Dict[str, Any]] = None,
         params: Optional[Dict[str, Any]] = None,
-        timeout: int = 30,
+        timeout: Optional[float] = None,
     ) -> Dict[str, Any]:
         """Make a PUT request.
 
@@ -285,7 +293,7 @@ class DefinedClient:
             endpoint: API endpoint path.
             json: Optional JSON body to send.
             params: Optional query parameters.
-            timeout: Request timeout in seconds.
+            timeout: Request timeout in seconds. Uses the client default when omitted.
 
         Returns:
             Parsed response as a dictionary.
@@ -296,14 +304,14 @@ class DefinedClient:
         self,
         endpoint: str,
         params: Optional[Dict[str, Any]] = None,
-        timeout: int = 30,
+        timeout: Optional[float] = None,
     ) -> Dict[str, Any]:
         """Make a DELETE request.
 
         Args:
             endpoint: API endpoint path.
             params: Optional query parameters.
-            timeout: Request timeout in seconds.
+            timeout: Request timeout in seconds. Uses the client default when omitted.
 
         Returns:
             Parsed response as a dictionary.

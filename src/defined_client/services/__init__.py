@@ -6,12 +6,16 @@ safe updates (GET-merge-PUT), and auto-pagination.
 """
 
 from .hosts import HostService
+from .networks import NetworkService
+from .roles import RoleService
 from .routes import RouteService
 from .tags import TagService
 from .pagination import list_all
 
 __all__ = [
     "HostService",
+    "NetworkService",
+    "RoleService",
     "RouteService",
     "TagService",
     "list_all",

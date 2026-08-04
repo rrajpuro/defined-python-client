@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 from ..exceptions import NotFoundError
+from ._common import resource_data
 from .pagination import list_all
 
 if TYPE_CHECKING:
@@ -72,7 +73,7 @@ class HostService:
         Fetches the current host state, merges in the provided values,
         and sends the full object back to the API.
         """
-        data = self.client.hosts.get(host_id).get("data", {})
+        data = resource_data(self.client.hosts.get(host_id), "host")
 
         return self.client.hosts.update(
             host_id,
@@ -104,7 +105,7 @@ class HostService:
 
     def add_tag(self, host_id: str, tag: str) -> Dict[str, Any]:
         """Add a single tag to a host (deduplicated)."""
-        data = self.client.hosts.get(host_id).get("data", {})
+        data = resource_data(self.client.hosts.get(host_id), "host")
         current_tags: List[str] = data.get("tags", [])
         if tag not in current_tags:
             current_tags = current_tags + [tag]
@@ -112,6 +113,6 @@ class HostService:
 
     def remove_tag(self, host_id: str, tag: str) -> Dict[str, Any]:
         """Remove a single tag from a host."""
-        data = self.client.hosts.get(host_id).get("data", {})
+        data = resource_data(self.client.hosts.get(host_id), "host")
         current_tags: List[str] = data.get("tags", [])
         return self.safe_update(host_id, tags=[t for t in current_tags if t != tag])
