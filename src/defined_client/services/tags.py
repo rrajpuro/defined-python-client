@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ._common import resource_data
 from .pagination import list_all
@@ -25,14 +25,14 @@ class TagService:
             tags.unsubscribe_route("lab:prod", route_id)
     """
 
-    def __init__(self, client: "DefinedClient") -> None:
+    def __init__(self, client: DefinedClient) -> None:
         self.client = client
 
     # ------------------------------------------------------------------
     # Lookup helpers
     # ------------------------------------------------------------------
 
-    def find_by_key(self, key: str) -> List[Dict[str, Any]]:
+    def find_by_key(self, key: str) -> list[dict[str, Any]]:
         """Find all tags with a given key prefix (e.g. ``"lab"``).
 
         Returns:
@@ -52,12 +52,12 @@ class TagService:
         self,
         tag: str,
         *,
-        description: Optional[str] = None,
-        config_overrides: Optional[List[Dict[str, Any]]] = None,
-        before: Optional[str] = None,
-        after: Optional[str] = None,
-        route_subscriptions: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
+        description: str | None = None,
+        config_overrides: list[dict[str, Any]] | None = None,
+        before: str | None = None,
+        after: str | None = None,
+        route_subscriptions: list[str] | None = None,
+    ) -> dict[str, Any]:
         """Update a tag without resetting omitted fields.
 
         Fetches the current tag state, merges in the provided values,
@@ -91,7 +91,7 @@ class TagService:
     # Route subscription helpers
     # ------------------------------------------------------------------
 
-    def subscribe_route(self, tag: str, route_id: str) -> Dict[str, Any]:
+    def subscribe_route(self, tag: str, route_id: str) -> dict[str, Any]:
         """Add a route subscription to a tag (idempotent)."""
         data = resource_data(self.client.tags.get(tag), "tag")
         current = data.get("routeSubscriptions", [])
@@ -99,7 +99,7 @@ class TagService:
             return {"data": data}
         return self.safe_update(tag, route_subscriptions=current + [route_id])
 
-    def unsubscribe_route(self, tag: str, route_id: str) -> Dict[str, Any]:
+    def unsubscribe_route(self, tag: str, route_id: str) -> dict[str, Any]:
         """Remove a route subscription from a tag."""
         data = resource_data(self.client.tags.get(tag), "tag")
         current = data.get("routeSubscriptions", [])

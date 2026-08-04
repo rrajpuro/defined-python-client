@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 from ..exceptions import NotFoundError
 from ._common import resource_data
@@ -26,14 +26,14 @@ class RouteService:
             routes.update_router_host(route["id"], new_host_id)
     """
 
-    def __init__(self, client: "DefinedClient") -> None:
+    def __init__(self, client: DefinedClient) -> None:
         self.client = client
 
     # ------------------------------------------------------------------
     # Lookup helpers
     # ------------------------------------------------------------------
 
-    def find_by_name(self, name: str) -> Optional[Dict[str, Any]]:
+    def find_by_name(self, name: str) -> dict[str, Any] | None:
         """Find a route by its name.
 
         Iterates through all pages because the API has no name filter.
@@ -46,7 +46,7 @@ class RouteService:
                 return route
         return None
 
-    def get_by_name(self, name: str) -> Dict[str, Any]:
+    def get_by_name(self, name: str) -> dict[str, Any]:
         """Find a route by name, raising :class:`NotFoundError` if missing."""
         route = self.find_by_name(name)
         if route is None:
@@ -61,22 +61,23 @@ class RouteService:
         self,
         route_id: str,
         *,
-        name: Optional[str] = None,
-        description: Optional[str] = None,
-        router_host_id: Optional[str] = None,
-        routable_cidrs: Optional[Dict] = None,
-        firewall_rules: Optional[list] = None,
-    ) -> Dict[str, Any]:
+        name: str | None = None,
+        description: str | None = None,
+        router_host_id: str | None = None,
+        routable_cidrs: dict | None = None,
+        firewall_rules: list | None = None,
+    ) -> dict[str, Any]:
         """Update a route without resetting omitted fields.
 
         Fetches the current route state, merges in the provided values,
         and sends the full object back to the API.
         """
         data = resource_data(self.client.routes.get(route_id), "route")
+        current_name = cast(str, data["name"])
 
         return self.client.routes.update(
             route_id,
-            name=name if name is not None else data.get("name"),
+            name=name if name is not None else current_name,
             description=(
                 description if description is not None else data.get("description")
             ),
@@ -101,8 +102,6 @@ class RouteService:
     # Targeted helpers
     # ------------------------------------------------------------------
 
-    def update_router_host(
-        self, route_id: str, host_id: str
-    ) -> Dict[str, Any]:
+    def update_router_host(self, route_id: str, host_id: str) -> dict[str, Any]:
         """Change which host a route points to, preserving all other fields."""
         return self.safe_update(route_id, router_host_id=host_id)

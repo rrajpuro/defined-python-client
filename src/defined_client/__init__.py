@@ -12,16 +12,16 @@ Quick Start:
 For more information, visit: https://github.com/rrajpuro/defined-python-client
 """
 
-from importlib.metadata import version, PackageNotFoundError
+from importlib.metadata import PackageNotFoundError, version
 
 from .client import DefinedClient
 from .exceptions import (
-    DefinedClientError,
-    ValidationError,
-    NotFoundError,
     AuthenticationError,
+    DefinedClientError,
+    NotFoundError,
     PermissionDeniedError,
     ServerError,
+    ValidationError,
 )
 from .services import (
     HostService,
@@ -38,17 +38,17 @@ except PackageNotFoundError:
     __version__: str = "0.0.0"
 
 __all__ = [
+    "AuthenticationError",
     "DefinedClient",
     "DefinedClientError",
-    "ValidationError",
-    "NotFoundError",
-    "AuthenticationError",
-    "PermissionDeniedError",
-    "ServerError",
     "HostService",
     "NetworkService",
+    "NotFoundError",
+    "PermissionDeniedError",
     "RoleService",
     "RouteService",
+    "ServerError",
     "TagService",
+    "ValidationError",
     "list_all",
 ]

@@ -8,7 +8,15 @@ import click
 
 from defined_client.services import RouteService
 
-from .core import CLIState, JSON_ARRAY, JSON_OBJECT, emit, list_options, paginate, require_changes
+from .core import (
+    JSON_ARRAY,
+    JSON_OBJECT,
+    CLIState,
+    emit,
+    list_options,
+    paginate,
+    require_changes,
+)
 
 
 @click.group()

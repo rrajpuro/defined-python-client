@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List
+from collections.abc import Callable
+from typing import Any
 
 
 def list_all(
-    list_func: Callable[..., Dict[str, Any]],
+    list_func: Callable[..., dict[str, Any]],
     **kwargs: Any,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Exhaust all pages of a paginated list endpoint and return every item.
 
     Args:
@@ -27,7 +28,7 @@ def list_all(
         all_hosts = list_all(client.hosts.list)
     """
     kwargs.setdefault("page_size", 100)
-    items: List[Dict[str, Any]] = []
+    items: list[dict[str, Any]] = []
     cursor = None
 
     while True:

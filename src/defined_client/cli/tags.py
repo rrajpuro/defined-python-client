@@ -9,9 +9,9 @@ import click
 from defined_client.services import TagService
 
 from .core import (
-    CLIState,
     JSON_ARRAY,
     JSON_OBJECT,
+    CLIState,
     emit,
     list_options,
     paginate,
