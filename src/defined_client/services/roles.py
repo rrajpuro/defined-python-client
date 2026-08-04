@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ._common import resource_data
 
@@ -13,16 +13,16 @@ if TYPE_CHECKING:
 class RoleService:
     """Convenience methods that compose low-level role API calls."""
 
-    def __init__(self, client: "DefinedClient") -> None:
+    def __init__(self, client: DefinedClient) -> None:
         self.client = client
 
     def safe_update(
         self,
         role_id: str,
         *,
-        description: Optional[str] = None,
-        firewall_rules: Optional[List[Dict[str, Any]]] = None,
-    ) -> Dict[str, Any]:
+        description: str | None = None,
+        firewall_rules: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
         """Update a role without resetting omitted fields.
 
         Fetches the current role state, merges in the provided values,

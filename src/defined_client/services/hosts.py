@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ..exceptions import NotFoundError
 from ._common import resource_data
@@ -26,14 +26,14 @@ class HostService:
             hosts.update_tags(host["id"], ["lab:prod", "role:router"])
     """
 
-    def __init__(self, client: "DefinedClient") -> None:
+    def __init__(self, client: DefinedClient) -> None:
         self.client = client
 
     # ------------------------------------------------------------------
     # Lookup helpers
     # ------------------------------------------------------------------
 
-    def find_by_name(self, name: str) -> Optional[Dict[str, Any]]:
+    def find_by_name(self, name: str) -> dict[str, Any] | None:
         """Find a host by its name.
 
         Iterates through all pages because the API has no name filter.
@@ -46,7 +46,7 @@ class HostService:
                 return host
         return None
 
-    def get_by_name(self, name: str) -> Dict[str, Any]:
+    def get_by_name(self, name: str) -> dict[str, Any]:
         """Find a host by name, raising :class:`NotFoundError` if missing."""
         host = self.find_by_name(name)
         if host is None:
@@ -61,13 +61,13 @@ class HostService:
         self,
         host_id: str,
         *,
-        name: Optional[str] = None,
-        role_id: Optional[str] = None,
-        static_addresses: Optional[List[str]] = None,
-        listen_port: Optional[int] = None,
-        tags: Optional[List[str]] = None,
-        config_overrides: Optional[List[Dict[str, Any]]] = None,
-    ) -> Dict[str, Any]:
+        name: str | None = None,
+        role_id: str | None = None,
+        static_addresses: list[str] | None = None,
+        listen_port: int | None = None,
+        tags: list[str] | None = None,
+        config_overrides: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
         """Update a host without resetting omitted fields.
 
         Fetches the current host state, merges in the provided values,
@@ -99,20 +99,20 @@ class HostService:
     # Tag helpers
     # ------------------------------------------------------------------
 
-    def update_tags(self, host_id: str, tags: List[str]) -> Dict[str, Any]:
+    def update_tags(self, host_id: str, tags: list[str]) -> dict[str, Any]:
         """Replace a host's tags without touching other fields."""
         return self.safe_update(host_id, tags=tags)
 
-    def add_tag(self, host_id: str, tag: str) -> Dict[str, Any]:
+    def add_tag(self, host_id: str, tag: str) -> dict[str, Any]:
         """Add a single tag to a host (deduplicated)."""
         data = resource_data(self.client.hosts.get(host_id), "host")
-        current_tags: List[str] = data.get("tags", [])
+        current_tags: list[str] = data.get("tags", [])
         if tag not in current_tags:
             current_tags = current_tags + [tag]
         return self.safe_update(host_id, tags=current_tags)
 
-    def remove_tag(self, host_id: str, tag: str) -> Dict[str, Any]:
+    def remove_tag(self, host_id: str, tag: str) -> dict[str, Any]:
         """Remove a single tag from a host."""
         data = resource_data(self.client.hosts.get(host_id), "host")
-        current_tags: List[str] = data.get("tags", [])
+        current_tags: list[str] = data.get("tags", [])
         return self.safe_update(host_id, tags=[t for t in current_tags if t != tag])

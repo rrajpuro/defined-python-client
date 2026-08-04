@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
-
+from typing import Any
 
 _MISSING = object()
 
@@ -18,7 +18,7 @@ class Call:
 
 
 class FakeResource:
-    def __init__(self, factory: "FakeClientFactory", name: str) -> None:
+    def __init__(self, factory: FakeClientFactory, name: str) -> None:
         self.factory = factory
         self.name = name
 

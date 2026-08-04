@@ -10,8 +10,7 @@ import pytest
 from click.testing import CliRunner
 
 from defined_client import DefinedClientError
-from defined_client.cli import core
-from defined_client.cli import main
+from defined_client.cli import core, main
 
 from .fakes import Call, FakeClientFactory
 

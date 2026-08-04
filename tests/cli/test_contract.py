@@ -9,7 +9,6 @@ from click.testing import CliRunner
 
 from defined_client.cli import main
 
-
 EXPECTED_COMMANDS = {
     "hosts": {
         "create",
