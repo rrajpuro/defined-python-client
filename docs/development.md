@@ -40,6 +40,9 @@ Apply Ruff's safe automatic fixes and formatter while developing:
 .venv/bin/ruff format .
 ```
 
+The `Quality` GitHub Actions workflow runs the same lint, formatting, type, and
+test checks for every pull request and every push to `main`.
+
 Run one test module while iterating:
 
 ```bash
