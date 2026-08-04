@@ -2,7 +2,182 @@
 
 A comprehensive Python client for interacting with the [Defined Networking API](https://docs.defined.net/api/defined-networking-api/). This client provides easy-to-use methods for managing hosts, roles, routes, tags, networks, and audit logs.
 
-## Quick Start
+## Command-Line Interface
+
+`definedcli` provides an AWS CLI-style command hierarchy for every operation in
+the client. Successful commands print the Defined API envelope directly as JSON
+by default, making the output suitable for scripts and JSON processors.
+
+### Install
+
+Install the command in an isolated environment with
+[uv](https://docs.astral.sh/uv/guides/tools/):
+
+From a local checkout:
+
+```bash
+uv tool install .
+```
+
+Or install directly from the Git repository:
+
+```bash
+uv tool install git+https://github.com/rrajpuro/defined-python-client
+```
+
+Re-run the local installation command with `--force` after changing the source.
+
+Confirm the installation without making an API request:
+
+```bash
+definedcli --version
+definedcli --help
+```
+
+### Authenticate
+
+Create an API key in the
+[Defined Networking admin panel](https://admin.defined.net/settings/api-keys),
+then export it in your shell:
+
+```bash
+export DEFINED_API_KEY='dnkey-...'
+definedcli hosts list
+```
+
+The CLI intentionally does not accept an API key as an argument and does not
+store profiles. `downloads list` is public and is the only command that does not
+require `DEFINED_API_KEY`.
+
+### Global Syntax
+
+```text
+definedcli [--base-url URL] [--timeout SECONDS] [--output json|table] RESOURCE COMMAND [OPTIONS]
+```
+
+Global options must appear before the resource name:
+
+- `--base-url URL` selects the API endpoint. Precedence is the command-line
+  option, then `DEFINED_BASE_URL`, then `https://api.defined.net`.
+- `--timeout SECONDS` sets the request timeout; the default is 30 seconds.
+- `--output json|table` selects indented JSON or a human-readable table. JSON is
+  the default.
+- `--version` prints the installed client version.
+
+Use `definedcli RESOURCE --help` or
+`definedcli RESOURCE COMMAND --help` for command-specific options. For example:
+
+```bash
+definedcli hosts create --help
+definedcli --output table networks list
+```
+
+### Command Inventory
+
+| Resource | Commands |
+| --- | --- |
+| `hosts` | `create`, `create-with-enrollment`, `list`, `get`, `get-by-name`, `find-by-name`, `update`, `replace`, `delete`, `block`, `unblock`, `debug-command`, `create-enrollment-code`, `update-tags`, `add-tag`, `remove-tag` |
+| `roles` | `create`, `list`, `get`, `update`, `replace`, `delete` |
+| `routes` | `create`, `list`, `get`, `get-by-name`, `find-by-name`, `update`, `replace`, `delete`, `update-router-host` |
+| `tags` | `create`, `list`, `get`, `find-by-key`, `update`, `replace`, `delete`, `subscribe-route`, `unsubscribe-route` |
+| `networks` | `create`, `list`, `get`, `update`, `replace` |
+| `audit-logs` | `list` |
+| `downloads` | `list` (unauthenticated) |
+
+All options use kebab case. Repeat singular options for simple collections:
+
+```bash
+definedcli hosts create \
+  --name edge-router-01 \
+  --network-id network-XXXXX \
+  --role-id role-XXXXX \
+  --static-address '203.0.113.10:4242' \
+  --tag 'env:prod' \
+  --tag 'region:us-central'
+```
+
+### Structured JSON Input
+
+Options representing nested API values accept either inline JSON or a
+`file://PATH` reference to a UTF-8 JSON file. The top-level JSON type is checked
+before a request is made.
+
+```bash
+# Inline JSON array
+definedcli roles create \
+  --name web \
+  --firewall-rules '[{"protocol":"TCP","allowedRoleID":"role-XXXXX","portRange":{"from":443,"to":443}}]'
+
+# Read a JSON object from a file
+definedcli routes create \
+  --name office \
+  --router-host-id host-XXXXX \
+  --routable-cidrs file://route-cidrs.json
+
+# Command arguments are also structured JSON
+definedcli hosts debug-command --host-id host-XXXXX \
+  --command StreamLogs \
+  --command-args '{"durationSeconds":60,"level":"info"}'
+```
+
+YAML, AWS shorthand syntax, and a generic `--cli-input-json` option are not
+supported.
+
+### Safe Updates and Raw Replacement
+
+The Defined API uses full-replacement `PUT` semantics. The CLI's `update`
+commands first fetch the current object, merge the fields provided on the
+command line, and then send the complete mutable representation. Omitted fields
+are preserved, while explicit empty arrays, empty objects, and false values are
+applied:
+
+```bash
+definedcli hosts update --host-id host-XXXXX --name edge-router-02
+definedcli networks update --network-id network-XXXXX --no-lighthouses-as-relays
+definedcli tags update --tag 'env:prod' --clear-route-subscriptions
+```
+
+Use `replace` when you deliberately want a low-level full replacement. It makes
+no preliminary `GET` and sends the decoded API-shaped object unchanged:
+
+```bash
+definedcli hosts replace --host-id host-XXXXX --document file://host-replacement.json
+definedcli roles replace --role-id role-XXXXX --document '{"description":"","firewallRules":[]}'
+```
+
+Safe updates can still race with another writer changing the same object between
+the CLI's `GET` and `PUT`; the API does not expose a conditional-update token.
+
+### Output and Pagination
+
+JSON output preserves successful API envelopes, normally containing `data` and
+`metadata`, without adding an `ok` or `result` wrapper. Diagnostics go to stderr,
+so stdout can be redirected safely:
+
+```bash
+definedcli hosts list > hosts.json
+definedcli --output table hosts get --host-id host-XXXXX
+```
+
+List commands automatically fetch every page. The default API page size is 100
+and can be changed from 1 through 500. Use a service continuation token to begin
+later, or request only one page:
+
+```bash
+definedcli hosts list --page-size 250
+definedcli hosts list --starting-token TOKEN
+definedcli hosts list --no-paginate
+```
+
+Auto-paginated output combines every page under `data`, preserves count
+metadata, and does not expose a stale continuation cursor. If a later page
+fails, the command prints no partial JSON. Local usage or configuration errors
+exit with status 2; API and network failures exit with status 1.
+
+Deletes are non-interactive. API keys and enrollment codes are never included
+in diagnostics.
+
+## Python Client Quick Start
 
 ### Basic Usage
 
