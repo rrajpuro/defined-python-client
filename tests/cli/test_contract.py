@@ -1,4 +1,4 @@
-"""Public command-tree and local-behavior tests for ``definedcli``."""
+"""Public command-tree and local-validation tests for ``definedcli``."""
 
 from __future__ import annotations
 
@@ -56,11 +56,6 @@ EXPECTED_COMMANDS = {
     "audit-logs": {"list"},
     "downloads": {"list"},
 }
-
-
-@pytest.fixture
-def runner() -> CliRunner:
-    return CliRunner()
 
 
 def test_complete_command_inventory() -> None:

@@ -1,423 +1,117 @@
-# Defined Networking API Python Client
+# Defined Networking Python Client
 
-A comprehensive Python client for interacting with the [Defined Networking API](https://docs.defined.net/api/defined-networking-api/). This client provides easy-to-use methods for managing hosts, roles, routes, tags, networks, and audit logs.
+`defined-client` provides two ways to work with the
+[Defined Networking API](https://docs.defined.net/api/defined-networking-api/):
 
-## Command-Line Interface
+- `definedcli`, a script-friendly command-line interface
+- `defined_client`, a typed Python package with low-level resources and safer
+  high-level services
 
-`definedcli` provides an AWS CLI-style command hierarchy for every operation in
-the client. Successful commands print the Defined API envelope directly as JSON
-by default, making the output suitable for scripts and JSON processors.
+The client covers hosts, roles, routes, tags, networks, audit logs, and public
+software downloads. Python 3.13 or newer is required.
 
-### Install
+## Choose an interface
 
-Install the command in an isolated environment with
-[uv](https://docs.astral.sh/uv/guides/tools/):
+Use the CLI for shell automation and interactive administration:
 
-From a local checkout:
+```bash
+export DEFINED_API_KEY='dnkey-...'
+definedcli --output table hosts list
+definedcli hosts get-by-name --name edge-router-01
+```
+
+Use the Python package when integrating Defined Networking into an application:
+
+```python
+import os
+
+from defined_client import DefinedClient, HostService
+
+with DefinedClient(api_key=os.environ["DEFINED_API_KEY"]) as client:
+    hosts = HostService(client)
+    host = hosts.get_by_name("edge-router-01")
+    print(host["id"])
+```
+
+## Install
+
+Install the CLI as an isolated tool from GitHub:
+
+```bash
+uv tool install git+https://github.com/rrajpuro/defined-python-client
+definedcli --version
+```
+
+Install the package into a uv-managed Python project:
+
+```bash
+uv add git+https://github.com/rrajpuro/defined-python-client
+```
+
+From a local checkout, use:
 
 ```bash
 uv tool install .
 ```
 
-Or install directly from the Git repository:
-
-```bash
-uv tool install git+https://github.com/rrajpuro/defined-python-client
-```
-
-Re-run the local installation command with `--force` after changing the source.
-
-Confirm the installation without making an API request:
-
-```bash
-definedcli --version
-definedcli --help
-```
-
-### Authenticate
-
-Create an API key in the
-[Defined Networking admin panel](https://admin.defined.net/settings/api-keys),
-then export it in your shell:
-
-```bash
-export DEFINED_API_KEY='dnkey-...'
-definedcli hosts list
-```
-
-The CLI intentionally does not accept an API key as an argument and does not
-store profiles. `downloads list` is public and is the only command that does not
-require `DEFINED_API_KEY`.
-
-### Global Syntax
-
-```text
-definedcli [--base-url URL] [--timeout SECONDS] [--output json|table] RESOURCE COMMAND [OPTIONS]
-```
-
-Global options must appear before the resource name:
-
-- `--base-url URL` selects the API endpoint. Precedence is the command-line
-  option, then `DEFINED_BASE_URL`, then `https://api.defined.net`.
-- `--timeout SECONDS` sets the request timeout; the default is 30 seconds.
-- `--output json|table` selects indented JSON or a human-readable table. JSON is
-  the default.
-- `--version` prints the installed client version.
-
-Use `definedcli RESOURCE --help` or
-`definedcli RESOURCE COMMAND --help` for command-specific options. For example:
-
-```bash
-definedcli hosts create --help
-definedcli --output table networks list
-```
-
-### Command Inventory
-
-| Resource | Commands |
-| --- | --- |
-| `hosts` | `create`, `create-with-enrollment`, `list`, `get`, `get-by-name`, `find-by-name`, `update`, `replace`, `delete`, `block`, `unblock`, `debug-command`, `create-enrollment-code`, `update-tags`, `add-tag`, `remove-tag` |
-| `roles` | `create`, `list`, `get`, `update`, `replace`, `delete` |
-| `routes` | `create`, `list`, `get`, `get-by-name`, `find-by-name`, `update`, `replace`, `delete`, `update-router-host` |
-| `tags` | `create`, `list`, `get`, `find-by-key`, `update`, `replace`, `delete`, `subscribe-route`, `unsubscribe-route` |
-| `networks` | `create`, `list`, `get`, `update`, `replace` |
-| `audit-logs` | `list` |
-| `downloads` | `list` (unauthenticated) |
-
-All options use kebab case. Repeat singular options for simple collections:
-
-```bash
-definedcli hosts create \
-  --name edge-router-01 \
-  --network-id network-XXXXX \
-  --role-id role-XXXXX \
-  --static-address '203.0.113.10:4242' \
-  --tag 'env:prod' \
-  --tag 'region:us-central'
-```
-
-### Structured JSON Input
-
-Options representing nested API values accept either inline JSON or a
-`file://PATH` reference to a UTF-8 JSON file. The top-level JSON type is checked
-before a request is made.
-
-```bash
-# Inline JSON array
-definedcli roles create \
-  --name web \
-  --firewall-rules '[{"protocol":"TCP","allowedRoleID":"role-XXXXX","portRange":{"from":443,"to":443}}]'
-
-# Read a JSON object from a file
-definedcli routes create \
-  --name office \
-  --router-host-id host-XXXXX \
-  --routable-cidrs file://route-cidrs.json
-
-# Command arguments are also structured JSON
-definedcli hosts debug-command --host-id host-XXXXX \
-  --command StreamLogs \
-  --command-args '{"durationSeconds":60,"level":"info"}'
-```
-
-YAML, AWS shorthand syntax, and a generic `--cli-input-json` option are not
-supported.
-
-### Safe Updates and Raw Replacement
-
-The Defined API uses full-replacement `PUT` semantics. The CLI's `update`
-commands first fetch the current object, merge the fields provided on the
-command line, and then send the complete mutable representation. Omitted fields
-are preserved, while explicit empty arrays, empty objects, and false values are
-applied:
-
-```bash
-definedcli hosts update --host-id host-XXXXX --name edge-router-02
-definedcli networks update --network-id network-XXXXX --no-lighthouses-as-relays
-definedcli tags update --tag 'env:prod' --clear-route-subscriptions
-```
-
-Use `replace` when you deliberately want a low-level full replacement. It makes
-no preliminary `GET` and sends the decoded API-shaped object unchanged:
-
-```bash
-definedcli hosts replace --host-id host-XXXXX --document file://host-replacement.json
-definedcli roles replace --role-id role-XXXXX --document '{"description":"","firewallRules":[]}'
-```
-
-Safe updates can still race with another writer changing the same object between
-the CLI's `GET` and `PUT`; the API does not expose a conditional-update token.
-
-### Output and Pagination
-
-JSON output preserves successful API envelopes, normally containing `data` and
-`metadata`, without adding an `ok` or `result` wrapper. Diagnostics go to stderr,
-so stdout can be redirected safely:
-
-```bash
-definedcli hosts list > hosts.json
-definedcli --output table hosts get --host-id host-XXXXX
-```
-
-List commands automatically fetch every page. The default API page size is 100
-and can be changed from 1 through 500. Use a service continuation token to begin
-later, or request only one page:
-
-```bash
-definedcli hosts list --page-size 250
-definedcli hosts list --starting-token TOKEN
-definedcli hosts list --no-paginate
-```
-
-Auto-paginated output combines every page under `data`, preserves count
-metadata, and does not expose a stale continuation cursor. If a later page
-fails, the command prints no partial JSON. Local usage or configuration errors
-exit with status 2; API and network failures exit with status 1.
-
-Deletes are non-interactive. API keys and enrollment codes are never included
-in diagnostics.
-
-## Python Client Quick Start
-
-### Basic Usage
-
-```python
-from defined_client import DefinedClient
-
-# Initialize the client with your API key
-api_key = "your-api-key-from-admin.defined.net"
-client = DefinedClient(api_key)
-
-# List hosts
-hosts = client.hosts.list()
-
-# Create a new host
-new_host = client.hosts.create(
-    name="My Host",
-    network_id="network-XXXXX",
-    role_id="role-XXXXX"
-)
-
-# Get a specific host
-host = client.hosts.get("host-XXXXX")
-
-# Delete a host
-client.hosts.delete("host-XXXXX")
-```
-
-### Running Directly with `uv`
-
-You can run Python scripts directly from the GitHub repository using `uv` without installing the package:
-
-```bash
-uv run --script your_script.py
-```
-
-In your Python script, create a file with the following header to specify dependencies:
-
-```python
-# /// script
-# requires-python = ">=3.13"
-# dependencies = [
-#     "defined-client",
-# ]
-#
-# [tool.uv.sources]
-# defined-client = { git = "https://github.com/rrajpuro/defined-python-client" }
-# ///
-
-from defined_client import DefinedClient
-
-api_key = "your-api-key-from-admin.defined.net"
-with DefinedClient(api_key) as client:
-    hosts = client.hosts.list()
-    print(hosts)
-```
-
-Then run:
-```bash
-uv run --script your_script.py
-```
-
-### Adding to Existing Scripts
-
-To add the `defined-client` dependency to any existing script, use:
-
-```bash
-uv add --script your_script.py git+https://github.com/rrajpuro/defined-python-client
-```
-
-This will automatically update your script's dependency block with the GitHub repository source.
-
-### Context Manager Usage (Recommended)
-
-Use the context manager to automatically close the session:
-
-```python
-from defined_client import DefinedClient
-
-api_key = "your-api-key-from-admin.defined.net"
-with DefinedClient(api_key) as client:
-    hosts = client.hosts.list()
-    new_host = client.hosts.create(name="My Host", network_id="network-XXXXX")
-```
-
-## Features
-
-### API Client (`client.hosts`, `client.routes`, etc.)
-
-Thin 1:1 wrappers around every API endpoint:
-
-- **Hosts** — create, list, get, update, delete, block/unblock, enrollment codes, debug commands
-- **Roles** — create, list, get, update, delete
-- **Routes** — create, list, get, update, delete
-- **Tags** — create, list, get, update, delete, priority positioning
-- **Networks** — create, list, get, update
-- **Audit Logs** — list with filtering by target type and ID
-- **Downloads** — get software download links (unauthenticated)
-
-> **Caution:** The API uses full-replacement PUT semantics. Any properties omitted
-> from an update request are reset to their default values. Use the service layer
-> below to avoid accidental data loss.
-
-### Service Layer (High-Level Convenience)
-
-The service layer sits on top of the API client and handles common patterns:
-
-```python
-from defined_client import DefinedClient, HostService, RouteService, TagService, list_all
-
-with DefinedClient(api_key) as client:
-    hosts = HostService(client)
-    routes = RouteService(client)
-    tags = TagService(client)
-
-    # Find resources by name (API only supports lookup by ID)
-    host = hosts.get_by_name("web-server-01")       # raises NotFoundError if missing
-    host = hosts.find_by_name("web-server-01")       # returns None if missing
-    route = routes.get_by_name("Corporate Network")
-
-    # Safe updates — only changes what you pass, preserves everything else
-    hosts.safe_update(host["id"], name="web-server-02")
-    routes.safe_update(route["id"], router_host_id="host-NEW")
-
-    # Tag helpers
-    hosts.add_tag(host["id"], "env:prod")
-    hosts.remove_tag(host["id"], "env:staging")
-    hosts.update_tags(host["id"], ["env:prod", "region:us-east-1"])
-
-    # Route subscription helpers
-    tags.subscribe_route("lab:prod", route["id"])
-    tags.unsubscribe_route("lab:prod", route["id"])
-
-    # Find all tags with a given key
-    lab_tags = tags.find_by_key("lab")  # returns [{"name": "lab:prod", ...}, ...]
-
-    # Auto-pagination — exhaust all pages of any list endpoint
-    all_hosts = list_all(client.hosts.list)
-    all_routes = list_all(client.routes.list)
-```
+Reinstall with `--force` after changing local source code.
 
 ## Authentication
 
-Obtain an API key from your Defined Networking admin panel at [https://admin.defined.net/settings/api-keys](https://admin.defined.net/settings/api-keys).
+Create an API key in the
+[Defined Networking admin panel](https://admin.defined.net/settings/api-keys).
+The key must include the scopes required by the operations you call.
 
-The API key must have the appropriate permission scopes for the operations you want to perform:
-- `hosts:` - for host operations
-- `roles:` - for role operations
-- `routes:` - for route operations
-- `tags:` - for tag operations
-- `networks:` - for network operations
-- `audit-logs:` - for audit log operations
+The CLI reads the key only from `DEFINED_API_KEY`:
 
-## Error Handling
-
-The client provides specific exception classes for different error scenarios:
-
-```python
-from defined_client import (
-    DefinedClientError,
-    ValidationError,
-    AuthenticationError,
-    NotFoundError,
-    PermissionDeniedError,
-    ServerError,
-)
-
-try:
-    with DefinedClient(api_key) as client:
-        client.hosts.get("non-existent-host")
-except NotFoundError as e:
-    print("Host not found:", e.message)
-except ValidationError as e:
-    print("Validation error:", e.message)
-    print("Error details:", e.errors)
-except AuthenticationError as e:
-    print("Authentication failed:", e.message)
-except PermissionDeniedError as e:
-    print("Permission denied:", e.message)
-except ServerError as e:
-    print("Server error:", e.message)
-except DefinedClientError as e:
-    print("API error:", e.message)
+```bash
+export DEFINED_API_KEY='dnkey-...'
 ```
 
-**Notes:**
-- List endpoints (e.g., `client.hosts.list()`) return the raw API response which includes pagination metadata under `metadata` as well as the list under `data`.
-- Many individual resource methods return the value of the API `data` key; if the server returned no `data` key (or a 204 No Content), the client will return an empty dictionary.
+Python applications pass the key to `DefinedClient`. Avoid hard-coding it;
+load it from your environment or secret manager instead.
 
-## Pagination
+The public downloads endpoint is the only supported operation that does not
+require authentication.
 
-List endpoints support pagination. Use `list_all` to auto-paginate, or paginate manually:
+## Resource coverage
 
-```python
-from defined_client import list_all
+| Resource | Supported operations |
+| --- | --- |
+| Hosts | Create, list, get, update, delete, block, unblock, enroll, debug |
+| Roles | Create, list, get, update, delete |
+| Routes | Create, list, get, update, delete |
+| Tags | Create, list, get, update, delete, manage route subscriptions |
+| Networks | Create, list, get, update |
+| Audit logs | List and filter |
+| Downloads | List public downloads |
 
-# Auto-paginate (recommended)
-all_hosts = list_all(client.hosts.list)
+All Python resource methods return the API response envelope, with resource
+content under `data` and pagination information under `metadata` when supplied
+by the API.
 
-# Manual pagination
-response = client.hosts.list(page_size=10, include_counts=True)
-if response['metadata'].get('nextCursor'):
-    response = client.hosts.list(cursor=response['metadata']['nextCursor'])
-```
+## Update safety
 
-## Filtering
+Defined Networking update endpoints use full-replacement `PUT` semantics.
+Calling a low-level resource `update()` with an incomplete document can reset
+omitted fields.
 
-Host listing supports various filters:
+- CLI `update` commands and Python `*Service.safe_update()` methods first fetch
+  the object, merge the requested changes, and send the complete mutable state.
+- CLI `replace` commands and low-level Python resource `update()` methods are for
+  deliberate API-shaped replacements.
 
-```python
-# List only lighthouses
-lighthouses = client.hosts.list(filter_is_lighthouse=True)
+Safe updates use a GET-then-PUT sequence and can still race with another writer.
 
-# List only relays
-relays = client.hosts.list(filter_is_relay=True)
+## Documentation
 
-# List blocked hosts
-blocked = client.hosts.list(filter_is_blocked=True)
+- [CLI guide](docs/cli.md) — commands, JSON input, output, pagination, and errors
+- [Python guide](docs/python.md) — client lifecycle, resources, services, and
+  exception handling
+- [Development guide](docs/development.md) — environment setup, tests, and
+  repository layout
+- [Defined Networking API reference](https://docs.defined.net/api/defined-networking-api/)
 
-# Filter by role
-role_hosts = client.hosts.list(filter_role_id="role-XXXXX")
+## License
 
-# Filter by platform
-dnclient_hosts = client.hosts.list(filter_metadata_platform="dnclient")
-```
-
-## Configuration
-
-The client uses the default API server `https://api.defined.net`. To use a custom server:
-
-```python
-client = DefinedClient(
-    api_key="your-key",
-    base_url="https://custom-api-server.com"
-)
-```
-
-## Examples
-
-See [examples/example_usage.py](examples/example_usage.py) for comprehensive examples of all available operations.
-
-## API Documentation
-
-For full API documentation, visit: [https://docs.defined.net/api/defined-networking-api/](https://docs.defined.net/api/defined-networking-api/)
+This project is distributed under the terms in [LICENSE.md](LICENSE.md).
